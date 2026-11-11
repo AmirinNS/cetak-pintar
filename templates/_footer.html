@@ -1,0 +1,26 @@
+<footer class="border-top py-4 mt-auto bg-body text-body-secondary small">
+    <div class="container">
+        <div class="row gy-3 align-items-center">
+            <div class="col-md-8">
+                <p class="mb-1 text-secondary">
+                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                    {{ t('disclaimer_curriculum', lang=lang) }}
+                </p>
+                <div class="text-body-tertiary">
+                    &copy; {{ current_year }} <strong>CetakKira</strong> · {{ t('footer_rights', lang=lang) }}
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="https://github.com/amirinns/cetak-kira"
+                   class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   title="GitHub Repository">
+                    <i class="bi bi-github" aria-hidden="true"></i>
+                    <span>{{ t('footer_source', lang=lang) }}</span>
+                    <i class="bi bi-box-arrow-up-right small" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>

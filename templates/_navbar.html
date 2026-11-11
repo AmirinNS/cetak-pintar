@@ -1,0 +1,31 @@
+<header class="navbar navbar-expand bg-body border-bottom shadow-sm py-2">
+    <div class="container d-flex justify-content-between align-items-center flex-nowrap">
+        <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none py-1 me-2 text-truncate" href="/{% if lang != 'ms' %}?lang={{ lang }}{% endif %}">
+            <span class="fs-4 fw-bold text-primary brand-title text-truncate">CetakKira</span>
+            <span class="badge text-bg-light border d-none d-md-inline-block small text-body-secondary fw-normal">
+                {{ t('app_tagline', lang=lang) }}
+            </span>
+        </a>
+
+        <nav id="field-lang" tabindex="-1" aria-label="Pilihan Bahasa / Language Switcher" class="flex-shrink-0 ms-auto">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Language">
+                <a href="{{ lang_url('ms') }}"
+                   class="btn {% if lang == 'ms' %}btn-primary active fw-semibold{% else %}btn-outline-secondary{% endif %}"
+                   {% if lang == 'ms' %}aria-current="true"{% endif %}
+                   lang="ms"
+                   data-lang="ms"
+                   title="Tukar ke Bahasa Melayu">
+                    BM
+                </a>
+                <a href="{{ lang_url('en') }}"
+                   class="btn {% if lang == 'en' %}btn-primary active fw-semibold{% else %}btn-outline-secondary{% endif %}"
+                   {% if lang == 'en' %}aria-current="true"{% endif %}
+                   lang="en"
+                   data-lang="en"
+                   title="Switch to English">
+                    EN
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>

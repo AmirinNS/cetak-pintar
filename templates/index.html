@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-section card border-0 shadow-sm rounded-4 p-3 p-sm-4 p-lg-5 mb-4 bg-body overflow-hidden">
+    <div class="row align-items-center g-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-body-emphasis mb-3 text-break">
+                {{ t('hero_title', lang=lang) }}
+            </h1>
+            <p class="lead text-secondary mb-4">
+                {{ t('hero_subtitle', lang=lang) }}
+            </p>
+            <div class="preset-group d-flex flex-wrap align-items-center gap-2" id="field-preset" tabindex="-1">
+                <span class="small fw-bold text-body-secondary me-1 w-100 w-sm-auto mb-1 mb-sm-0">
+                    {{ t('presets_label', lang=lang) }}
+                </span>
+                <a href="/?preset=t1{% if lang != 'ms' %}&lang={{ lang }}{% endif %}"
+                   class="btn btn-sm {% if preset == 't1' %}btn-primary active fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2 text-nowrap"
+                   title="{{ t('preset_t1_desc', lang=lang) }}">
+                    <i class="bi bi-star-fill me-1" aria-hidden="true"></i>{{ t('preset_t1_badge', lang=lang) }}
+                </a>
+                <a href="/?preset=t2{% if lang != 'ms' %}&lang={{ lang }}{% endif %}"
+                   class="btn btn-sm {% if preset == 't2' %}btn-primary active fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2 text-nowrap"
+                   title="{{ t('preset_t2_desc', lang=lang) }}">
+                    <i class="bi bi-stars me-1" aria-hidden="true"></i>{{ t('preset_t2_badge', lang=lang) }}
+                </a>
+                <a href="/?preset=t3{% if lang != 'ms' %}&lang={{ lang }}{% endif %}"
+                   class="btn btn-sm {% if preset == 't3' %}btn-primary active fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2 text-nowrap"
+                   title="{{ t('preset_t3_desc', lang=lang) }}">
+                    <i class="bi bi-trophy-fill me-1" aria-hidden="true"></i>{{ t('preset_t3_badge', lang=lang) }}
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='img/mascot.webp') }}"
+                 alt="{{ t('alt_mascot', lang=lang) }}"
+                 width="240" height="240"
+                 class="mascot-hero-img img-fluid rounded-4"
+                 loading="eager">
+        </div>
+    </div>
+</section>
+
+{% if has_errors %}
+<div id="error-summary" class="alert alert-danger shadow-sm mb-4 rounded-4" role="alert" tabindex="-1" aria-labelledby="error-summary-heading">
+    <h2 id="error-summary-heading" class="h5 alert-heading fw-bold mb-2">
+        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ t('error_summary_title', lang=lang) }}
+    </h2>
+    <ul class="mb-0">
+        {% for item in error_list %}
+        <li>
+            <a href="#field-{{ item.field }}" class="alert-link text-decoration-underline">
+                {{ item.message }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form method="GET" action="/cetak" target="_blank" id="worksheet-form" class="pb-3" novalidate>
+    <input type="hidden" name="lang" id="input-lang" value="{{ lang }}">
+
+    <!-- 1. Topic Selection -->
+    <fieldset class="card border shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-body" id="field-t">
+        <legend class="h5 fw-bold mb-1 float-none w-auto">
+            {{ t('section_topics', lang=lang) }}
+        </legend>
+        <p class="text-body-secondary small mb-3">
+            {{ t('section_topics_hint', lang=lang) }}
+        </p>
+
+        {% if 't' in field_errors %}
+        <div id="error-t" class="alert alert-danger py-2 small mb-3 rounded-3" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>
+            {{ field_errors['t'] }}
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+            {% for topic in VALID_TOPICS %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="topic-check-{{ topic }}"
+                       class="topic-select-card card h-100 p-3 border rounded-3 d-flex flex-row align-items-center gap-3 {% if topic in selected_topics %}border-primary bg-primary-subtle text-primary-emphasis active{% endif %}">
+                    <div class="form-check m-0">
+                        <input class="form-check-input topic-checkbox fs-5"
+                               type="checkbox"
+                               name="t"
+                               value="{{ topic }}"
+                               id="topic-check-{{ topic }}"
+                               data-topic="{{ topic }}"
+                               {% if topic in selected_topics %}checked{% endif %}
+                               {% if 't' in field_errors %}aria-invalid="true" aria-describedby="error-t"{% endif %}>
+                    </div>
+                    <div class="topic-icon-box flex-shrink-0 rounded-2 overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                        <img src="{{ url_for('static', filename='img/topic-' ~ topic ~ '.webp') }}"
+                             alt="{{ t('alt_topic_' ~ topic, lang=lang) }}"
+                             width="48" height="48"
+                             class="topic-icon-img w-100 h-100 object-fit-contain"
+                             loading="lazy">
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fw-bold fs-6 text-truncate">{{ t('topic_' ~ topic ~ '_name', lang=lang) }}</div>
+                    </div>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </fieldset>
+
+    <!-- 2. Topic Options & Difficulty -->
+    <section class="mb-4">
+        <h2 class="h5 fw-bold mb-3 px-1">{{ t('section_options', lang=lang) }}</h2>
+
+        <!-- Topic Options: Grid -->
+        <fieldset id="group-topic-grid"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-grid.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_grid_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-grid_start">
+                    <label for="input-grid-start" class="form-label fw-semibold">
+                        {{ t('label_grid_start', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'grid_start' in field_errors %}is-invalid{% endif %}"
+                            id="input-grid-start"
+                            name="grid_start"
+                            {% if 'grid_start' in field_errors %}aria-invalid="true" aria-describedby="error-grid_start"{% endif %}>
+                        {% for start_num in VALID_GRID_STARTS %}
+                        <option value="{{ start_num }}" {% if grid_start_val == start_num|string %}selected{% endif %}>
+                            {{ start_num }} - {{ start_num + 99 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if 'grid_start' in field_errors %}
+                    <div id="error-grid_start" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['grid_start'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_grid_start', lang=lang) }}</div>
+                </div>
+
+                <div class="col-md-6" id="field-grid_blanks">
+                    <label for="input-grid-blanks" class="form-label fw-semibold">
+                        {{ t('label_grid_blanks', lang=lang) }}
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-touch {% if 'grid_blanks' in field_errors %}is-invalid{% endif %}"
+                           id="input-grid-blanks"
+                           name="grid_blanks"
+                           min="15" max="60"
+                           value="{{ grid_blanks_val }}"
+                           {% if 'grid_blanks' in field_errors %}aria-invalid="true" aria-describedby="error-grid_blanks"{% endif %}>
+                    {% if 'grid_blanks' in field_errors %}
+                    <div id="error-grid_blanks" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['grid_blanks'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_grid_blanks', lang=lang) }}</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Count -->
+        <fieldset id="group-topic-count"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-count.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_count_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-count_max">
+                    <label for="input-count-max" class="form-label fw-semibold">
+                        {{ t('label_count_max', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'count_max' in field_errors %}is-invalid{% endif %}"
+                            id="input-count-max"
+                            name="count_max"
+                            {% if 'count_max' in field_errors %}aria-invalid="true" aria-describedby="error-count_max"{% endif %}>
+                        {% for max_n in VALID_COUNT_MAX %}
+                        <option value="{{ max_n }}" {% if count_max_val == max_n|string %}selected{% endif %}>
+                            1 - {{ max_n }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if 'count_max' in field_errors %}
+                    <div id="error-count_max" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['count_max'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_count_max', lang=lang) }}</div>
+                </div>
+
+                <div class="col-md-6" id="field-count_shapes">
+                    <label class="form-label fw-semibold d-block">
+                        {{ t('label_count_shapes', lang=lang) }}
+                    </label>
+                    <input type="hidden" name="count_shapes" value="">
+                    <div class="d-flex flex-wrap gap-3 pt-1">
+                        {% for shape in VALID_SHAPES %}
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="count_shapes"
+                                   value="{{ shape }}"
+                                   id="shape-check-{{ shape }}"
+                                   {% if shape in count_shapes %}checked{% endif %}
+                                   {% if 'count_shapes' in field_errors %}aria-invalid="true" aria-describedby="error-count_shapes"{% endif %}>
+                            <label class="form-check-label" for="shape-check-{{ shape }}">
+                                {{ t('shape_' ~ shape, lang=lang) }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if 'count_shapes' in field_errors %}
+                    <div id="error-count_shapes" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['count_shapes'] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Add -->
+        <fieldset id="group-topic-add"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-add.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_add_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-add_digits">
+                    <label for="input-add-digits" class="form-label fw-semibold">
+                        {{ t('label_add_digits', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'add_digits' in field_errors %}is-invalid{% endif %}"
+                            id="input-add-digits"
+                            name="add_digits"
+                            {% if 'add_digits' in field_errors %}aria-invalid="true" aria-describedby="error-add_digits"{% endif %}>
+                        <option value="1" {% if add_digits_val == '1' %}selected{% endif %}>1 Digit</option>
+                        <option value="2" {% if add_digits_val == '2' %}selected{% endif %}>2 Digit</option>
+                        <option value="3" {% if add_digits_val == '3' %}selected{% endif %}>3 Digit</option>
+                    </select>
+                    {% if 'add_digits' in field_errors %}
+                    <div id="error-add_digits" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['add_digits'] }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6" id="field-add_regroup">
+                    <label for="input-add-regroup" class="form-label fw-semibold">
+                        {{ t('label_add_regroup', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'add_regroup' in field_errors %}is-invalid{% endif %}"
+                            id="input-add-regroup"
+                            name="add_regroup"
+                            {% if 'add_regroup' in field_errors %}aria-invalid="true" aria-describedby="error-add_regroup"{% endif %}>
+                        <option value="0" {% if add_regroup_val == '0' %}selected{% endif %}>
+                            {{ t('opt_add_no_regroup', lang=lang) }}
+                        </option>
+                        <option value="1" {% if add_regroup_val == '1' %}selected{% endif %}>
+                            {{ t('opt_add_regroup', lang=lang) }}
+                        </option>
+                    </select>
+                    {% if 'add_regroup' in field_errors %}
+                    <div id="error-add_regroup" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['add_regroup'] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Sub -->
+        <fieldset id="group-topic-sub"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-sub.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_sub_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-sub_digits">
+                    <label for="input-sub-digits" class="form-label fw-semibold">
+                        {{ t('label_sub_digits', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'sub_digits' in field_errors %}is-invalid{% endif %}"
+                            id="input-sub-digits"
+                            name="sub_digits"
+                            {% if 'sub_digits' in field_errors %}aria-invalid="true" aria-describedby="error-sub_digits"{% endif %}>
+                        <option value="1" {% if sub_digits_val == '1' %}selected{% endif %}>1 Digit</option>
+                        <option value="2" {% if sub_digits_val == '2' %}selected{% endif %}>2 Digit</option>
+                        <option value="3" {% if sub_digits_val == '3' %}selected{% endif %}>3 Digit</option>
+                    </select>
+                    {% if 'sub_digits' in field_errors %}
+                    <div id="error-sub_digits" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['sub_digits'] }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6" id="field-sub_borrow">
+                    <label for="input-sub-borrow" class="form-label fw-semibold">
+                        {{ t('label_sub_borrow', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'sub_borrow' in field_errors %}is-invalid{% endif %}"
+                            id="input-sub-borrow"
+                            name="sub_borrow"
+                            {% if 'sub_borrow' in field_errors %}aria-invalid="true" aria-describedby="error-sub_borrow"{% endif %}>
+                        <option value="0" {% if sub_borrow_val == '0' %}selected{% endif %}>
+                            {{ t('opt_sub_no_borrow', lang=lang) }}
+                        </option>
+                        <option value="1" {% if sub_borrow_val == '1' %}selected{% endif %}>
+                            {{ t('opt_sub_borrow', lang=lang) }}
+                        </option>
+                    </select>
+                    {% if 'sub_borrow' in field_errors %}
+                    <div id="error-sub_borrow" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['sub_borrow'] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Sifir Shared Tables (sifir_ref / sifir) -->
+        <fieldset id="group-topic-sifir_ref"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-sifir_ref.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_sifir_ref_name', lang=lang) }} / {{ t('topic_sifir_name', lang=lang) }}
+            </legend>
+            <div id="field-sifir_tables">
+                <label class="form-label fw-semibold d-block mb-2">
+                    {{ t('label_sifir_tables', lang=lang) }}
+                </label>
+                <input type="hidden" name="sifir_tables" value="">
+                <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 g-2">
+                    {% for table_num in ALL_SIFIR_TABLES %}
+                    <div class="col">
+                        <input type="checkbox"
+                               class="btn-check"
+                               name="sifir_tables"
+                               value="{{ table_num }}"
+                               id="sifir-table-{{ table_num }}"
+                               {% if table_num in sifir_tables %}checked{% endif %}
+                               {% if 'sifir_tables' in field_errors %}aria-invalid="true" aria-describedby="error-sifir_tables"{% endif %}>
+                        <label class="btn btn-outline-secondary w-100 py-2 text-center sifir-table-btn"
+                               for="sifir-table-{{ table_num }}">
+                            {{ t('table_num', lang=lang, n=table_num) }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if 'sifir_tables' in field_errors %}
+                <div id="error-sifir_tables" class="invalid-feedback d-block mt-2">
+                    <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['sifir_tables'] }}
+                </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Sifir Practice Questions -->
+        <fieldset id="group-topic-sifir"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-sifir.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_sifir_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-sifir_n">
+                    <label for="input-sifir-n" class="form-label fw-semibold">
+                        {{ t('label_sifir_n', lang=lang) }}
+                    </label>
+                    <input type="number"
+                           class="form-control form-control-touch {% if 'sifir_n' in field_errors %}is-invalid{% endif %}"
+                           id="input-sifir-n"
+                           name="sifir_n"
+                           min="1" max="24"
+                           value="{{ sifir_n_val }}"
+                           {% if 'sifir_n' in field_errors %}aria-invalid="true" aria-describedby="error-sifir_n"{% endif %}>
+                    {% if 'sifir_n' in field_errors %}
+                    <div id="error-sifir_n" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['sifir_n'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_sifir_n', lang=lang) }}</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Division -->
+        <fieldset id="group-topic-div"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-div.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_div_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-4" id="field-div_digits">
+                    <label for="input-div-digits" class="form-label fw-semibold">
+                        {{ t('label_div_digits', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'div_digits' in field_errors %}is-invalid{% endif %}"
+                            id="input-div-digits"
+                            name="div_digits"
+                            {% if 'div_digits' in field_errors %}aria-invalid="true" aria-describedby="error-div_digits"{% endif %}>
+                        <option value="2" {% if div_digits_val == '2' %}selected{% endif %}>2 Digit</option>
+                        <option value="3" {% if div_digits_val == '3' %}selected{% endif %}>3 Digit</option>
+                    </select>
+                    {% if 'div_digits' in field_errors %}
+                    <div id="error-div_digits" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['div_digits'] }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4" id="field-div_divisors">
+                    <label class="form-label fw-semibold d-block">
+                        {{ t('label_div_divisors', lang=lang) }}
+                    </label>
+                    <input type="hidden" name="div_divisors" value="">
+                    <div class="d-flex flex-wrap gap-2 pt-1">
+                        {% for d_num in ALL_DIVISORS %}
+                        <div class="form-check form-check-inline m-0">
+                            <input class="btn-check"
+                                   type="checkbox"
+                                   name="div_divisors"
+                                   value="{{ d_num }}"
+                                   id="div-divisor-{{ d_num }}"
+                                   {% if d_num in div_divisors %}checked{% endif %}
+                                   {% if 'div_divisors' in field_errors %}aria-invalid="true" aria-describedby="error-div_divisors"{% endif %}>
+                            <label class="btn btn-sm btn-outline-secondary px-3 py-1 divisor-btn"
+                                   for="div-divisor-{{ d_num }}">
+                                ÷{{ d_num }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if 'div_divisors' in field_errors %}
+                    <div id="error-div_divisors" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['div_divisors'] }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4" id="field-div_rem">
+                    <label for="input-div-rem" class="form-label fw-semibold">
+                        {{ t('label_div_rem', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'div_rem' in field_errors %}is-invalid{% endif %}"
+                            id="input-div-rem"
+                            name="div_rem"
+                            {% if 'div_rem' in field_errors %}aria-invalid="true" aria-describedby="error-div_rem"{% endif %}>
+                        <option value="0" {% if div_rem_val == '0' %}selected{% endif %}>
+                            {{ t('opt_div_exact', lang=lang) }}
+                        </option>
+                        <option value="1" {% if div_rem_val == '1' %}selected{% endif %}>
+                            {{ t('opt_div_rem', lang=lang) }}
+                        </option>
+                    </select>
+                    {% if 'div_rem' in field_errors %}
+                    <div id="error-div_rem" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['div_rem'] }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+    </section>
+
+    <!-- 3. General & Page Settings -->
+    <fieldset class="card border shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-body">
+        <legend class="h5 fw-bold mb-3 float-none w-auto">
+            {{ t('section_general', lang=lang) }}
+        </legend>
+        <div class="row g-3">
+            <div class="col-md-4" id="field-pages">
+                <label for="input-pages" class="form-label fw-semibold">
+                    {{ t('label_pages', lang=lang) }}
+                </label>
+                <input type="number"
+                       class="form-control form-control-touch {% if 'pages' in field_errors %}is-invalid{% endif %}"
+                       id="input-pages"
+                       name="pages"
+                       min="1" max="20"
+                       value="{{ pages_val }}"
+                       {% if 'pages' in field_errors %}aria-invalid="true" aria-describedby="error-pages"{% endif %}>
+                {% if 'pages' in field_errors %}
+                <div id="error-pages" class="invalid-feedback d-block">
+                    <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['pages'] }}
+                </div>
+                {% endif %}
+                <div class="form-text small">{{ t('hint_pages', lang=lang) }}</div>
+            </div>
+
+            <div class="col-md-4" id="field-ans">
+                <label for="input-ans" class="form-label fw-semibold">
+                    {{ t('label_ans', lang=lang) }}
+                </label>
+                <select class="form-select form-control-touch {% if 'ans' in field_errors %}is-invalid{% endif %}"
+                        id="input-ans"
+                        name="ans"
+                        {% if 'ans' in field_errors %}aria-invalid="true" aria-describedby="error-ans"{% endif %}>
+                    <option value="1" {% if ans_val == '1' %}selected{% endif %}>
+                        {{ t('opt_ans_yes', lang=lang) }}
+                    </option>
+                    <option value="0" {% if ans_val == '0' %}selected{% endif %}>
+                        {{ t('opt_ans_no', lang=lang) }}
+                    </option>
+                </select>
+                {% if 'ans' in field_errors %}
+                <div id="error-ans" class="invalid-feedback d-block">
+                    <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['ans'] }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4" id="field-seed">
+                <label for="input-seed" class="form-label fw-semibold">
+                    {{ t('label_seed', lang=lang) }}
+                </label>
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control font-monospace form-control-touch {% if 'seed' in field_errors %}is-invalid{% endif %}"
+                           id="input-seed"
+                           name="seed"
+                           value="{{ seed }}"
+                           {% if 'seed' in field_errors %}aria-invalid="true" aria-describedby="error-seed"{% endif %}>
+                    <button type="button" class="btn btn-outline-secondary px-3 d-none js-show" id="btn-new-seed">
+                        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
+                        <span>{{ t('btn_new_seed', lang=lang) }}</span>
+                    </button>
+                </div>
+                {% if 'seed' in field_errors %}
+                <div id="error-seed" class="invalid-feedback d-block">
+                    <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['seed'] }}
+                </div>
+                {% endif %}
+                <div class="form-text small">{{ t('hint_seed', lang=lang) }}</div>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Action Bar -->
+    <div class="action-card card border-0 shadow-lg rounded-4 p-3 p-md-4 mb-4 bg-body sticky-bottom-card">
+        <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+            <div class="d-flex flex-wrap gap-3 align-items-center w-100 w-sm-auto">
+                <button type="submit"
+                        class="btn btn-primary btn-lg px-4 py-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 rounded-3 shadow-sm btn-action flex-grow-1 flex-sm-grow-0"
+                        id="btn-submit">
+                    <i class="bi bi-printer-fill fs-5" aria-hidden="true"></i>
+                    <span>{{ t('btn_generate', lang=lang) }}</span>
+                    <span class="visually-hidden"> {{ t('btn_generate_disclosure', lang=lang) }}</span>
+                    <i class="bi bi-box-arrow-up-right small ms-1 opacity-75" aria-hidden="true"></i>
+                </button>
+
+                <button type="button"
+                        class="btn btn-outline-secondary btn-lg px-4 py-3 fw-semibold d-inline-flex align-items-center justify-content-center gap-2 rounded-3 btn-action flex-grow-1 flex-sm-grow-0 d-none js-show"
+                        id="btn-share">
+                    <i class="bi bi-share-fill fs-5" aria-hidden="true"></i>
+                    <span id="btn-share-label">{{ t('btn_share', lang=lang) }}</span>
+                </button>
+            </div>
+
+            <div id="share-toast" class="badge text-bg-success py-2 px-3 fs-6 d-none align-items-center gap-1 rounded-pill">
+                <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>
+                <span>{{ t('share_copied', lang=lang) }}</span>
+            </div>
+        </div>
+
+        <div id="share-fallback-container" class="mt-3 p-3 bg-body-tertiary rounded-3 border d-none">
+            <label for="share-url-input" class="form-label small fw-semibold">
+                {{ t('share_fallback_label', lang=lang) }}
+            </label>
+            <div class="input-group">
+                <input type="text" id="share-url-input" class="form-control font-monospace" readonly>
+                <button type="button" class="btn btn-secondary px-3" id="btn-copy-fallback">
+                    <i class="bi bi-clipboard me-1" aria-hidden="true"></i>Copy
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
