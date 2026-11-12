@@ -155,14 +155,14 @@ def test_grid_rendering_and_answers(lang: str) -> None:
             assert "SKEMA JAWAPAN" in answer_text
             assert "[SKEMA JAWAPAN]" not in answer_text
             assert "Untuk guru / ibu bapa" in answer_text
-            assert "cetakkira" in content_text
+            assert "CetakKira" in content_text
             assert "Halaman 1 / 2" in content_text
         else:
             assert "100-NUMBER GRID" in content_text
             assert "ANSWER KEY" in answer_text
             assert "[ANSWER KEY]" not in answer_text
             assert "For teachers and parents" in answer_text
-            assert "cetakkira" in content_text
+            assert "CetakKira" in content_text
             assert "Page 1 of 2" in content_text
 
         # 901 grid includes 1000

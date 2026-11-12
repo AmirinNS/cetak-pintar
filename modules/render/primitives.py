@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from reportlab.lib import colors
 from reportlab.lib.colors import Color, HexColor
 from reportlab.lib.pagesizes import A4
@@ -12,6 +14,8 @@ from modules.i18n import t
 PAGE_W, PAGE_H = A4  # 595.275590551181, 841.8897637795276
 MARGIN_X: float = 28.0
 CONTENT_W: float = PAGE_W - 2 * MARGIN_X  # 539.275590551181
+LOGO_PATH: str = str(Path(__file__).resolve().parents[2] / "static" / "img" / "logo-print.png")
+LOGO_SIZE: float = 14.0
 
 # Standard grayscale palette
 COLOR_BLACK: Color = colors.black
@@ -196,10 +200,13 @@ def draw_footer(
         c, MARGIN_X, rule_y, PAGE_W - MARGIN_X, rule_y, stroke_color=COLOR_FAINT, line_width=0.5
     )
 
-    # Brand mark on left
+    # Brand mark on left: logo, then name
+    c.drawImage(
+        LOGO_PATH, MARGIN_X, text_y - 4.0, LOGO_SIZE, LOGO_SIZE, mask="auto"
+    )
     c.setFont("Helvetica-Bold", 8.5)
     c.setFillColor(COLOR_MID)
-    c.drawString(MARGIN_X, text_y, t("brand_footer", lang=lang))
+    c.drawString(MARGIN_X + LOGO_SIZE + 4.0, text_y, t("brand_footer", lang=lang))
 
     # Page number on right
     c.setFont("Helvetica", 8.5)

@@ -11,7 +11,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "ms": {
         # App identity
         "app_name": "CetakKira",
-        "brand_footer": "cetakkira",
+        "brand_footer": "CetakKira",
         "app_tagline": "Lembaran Kerja Matematik Rendah Boleh Cetak",
         # Hero & Intro
         "hero_title": "Jana Lembaran Kerja Matematik A4 Boleh Cetak",
@@ -216,7 +216,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         # App identity
         "app_name": "CetakKira",
-        "brand_footer": "cetakkira",
+        "brand_footer": "CetakKira",
         "app_tagline": "Printable Primary Math Worksheets",
         # Hero & Intro
         "hero_title": "Generate Printable A4 Math Worksheets",
