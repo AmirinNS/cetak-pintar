@@ -338,11 +338,74 @@ def test_alphabet_options_rendered_form_controls(client: FlaskClient) -> None:
 
 
 def test_preset_abc_prechecks_topics(client: FlaskClient) -> None:
-    """preset=abc pre-checks the three alphabet topics in the form."""
+    """preset=abc pre-checks the alphabet and picture topics in the form."""
     resp = client.get("/?preset=abc")
     assert resp.status_code == 200
     parser = parse_html(resp.data.decode("utf-8"))
 
     topic_checkboxes = [inp for inp in parser.inputs if inp.get("name") == "t"]
     checked_topics = {inp.get("value") for inp in topic_checkboxes if "checked" in inp}
-    assert checked_topics == {"trace", "missing", "match"}
+    assert checked_topics == {"trace", "missing", "match", "first_letter"}
+
+
+def test_baseline_html_picture_theme_controls_enabled(client: FlaskClient) -> None:
+    """In baseline HTML (JS disabled), picture themes and guess_hint arrive enabled."""
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.data.decode("utf-8")
+    parser = parse_html(html)
+
+    fieldset_themes = parser.elements_with_id.get("group-topic-themes")
+    assert fieldset_themes is not None
+    classes = fieldset_themes.get("class", "").split()
+    assert "d-none" not in classes
+
+    # 1 sentinel + 4 checkboxes
+    theme_inputs = parser.get_inputs_by_name("themes")
+    assert len(theme_inputs) == 5
+    for inp in theme_inputs:
+        assert "disabled" not in inp
+
+    guess_hint_selects = [s for s in parser.selects if s.get("name") == "guess_hint"]
+    assert len(guess_hint_selects) == 1
+    assert "disabled" not in guess_hint_selects[0]
+
+
+def test_empty_themes_renders_error(client: FlaskClient) -> None:
+    """Unchecking all themes submits empty sentinel and renders error with aria attributes."""
+    # Malay
+    resp_ms = client.get("/cetak?t=first_letter&themes=&seed=42&lang=ms")
+    assert resp_ms.status_code == 400
+    html_ms = resp_ms.data.decode("utf-8")
+    assert "Sila pilih sekurang-kurangnya satu tema." in html_ms
+    assert 'href="#field-themes"' in html_ms
+    parser_ms = parse_html(html_ms)
+    theme_boxes_ms = [
+        inp for inp in parser_ms.get_inputs_by_name("themes")
+        if inp.get("type") == "checkbox"
+    ]
+    assert len(theme_boxes_ms) == 4
+    for box in theme_boxes_ms:
+        assert "checked" not in box
+        assert box.get("aria-invalid") == "true"
+        assert box.get("aria-describedby") == "error-themes"
+
+    # English
+    resp_en = client.get("/cetak?t=guess_word&themes=&seed=42&lang=en")
+    assert resp_en.status_code == 400
+    html_en = resp_en.data.decode("utf-8")
+    assert "Please select at least one theme." in html_en
+    assert 'href="#field-themes"' in html_en
+
+
+def test_guess_hint_control_rendered_and_prefilled(client: FlaskClient) -> None:
+    """The guess_hint select control is rendered and correctly prefilled."""
+    resp = client.get("/?t=guess_word&guess_hint=0&seed=123")
+    assert resp.status_code == 200
+    parser = parse_html(resp.data.decode("utf-8"))
+
+    options = parser.select_options.get("guess_hint", [])
+    assert len(options) == 2
+    selected = [opt for opt in options if "selected" in opt]
+    assert len(selected) == 1
+    assert selected[0].get("value") == "0"

@@ -11,6 +11,8 @@ from modules.alphabet import (
     MissingRow,
     match_sets,
     missing_rows,
+    picture_items,
+    scramble,
     trace_letters,
 )
 
@@ -209,3 +211,35 @@ def test_match_set_immutability():
         ms.right = ("d", "c")  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
         ms.pairs = (0, 1)  # type: ignore[misc]
+
+
+@pytest.mark.parametrize("themes,n", [
+    (("animals",), 12), (("fruits",), 8), (("vehicles", "sports"), 12),
+])
+def test_picture_items_distinct_per_sheet(themes, n):
+    items = picture_items(Random(42), themes, n)
+    assert len(items) == len(set(items)) == n
+    assert all(item.theme in themes for item in items)
+    assert items == picture_items(Random(42), themes, n)
+
+
+def test_picture_items_repeat_fresh_passes():
+    items = picture_items(Random(42), ("animals",), 30)
+    assert len(items) == 30
+    assert len(set(items[:12])) == len(set(items[12:24])) == 12
+    assert len(set(items[24:])) == 6
+    assert picture_items(Random(42), ("animals",), 0) == []
+
+
+@pytest.mark.parametrize("word", ["CAT", "RAMBUTAN", "ELEPHANT", "SWIMMING", "AAAAAAAB", "AB"])
+def test_scramble_changes_word_and_preserves_letters(word):
+    for seed in range(100):
+        hint = scramble(Random(seed), word)
+        assert hint != word
+        assert sorted(hint) == sorted(word)
+        assert hint == scramble(Random(seed), word)
+
+
+@pytest.mark.parametrize("word", ["", "A", "AAAA"])
+def test_scramble_single_letter_type(word):
+    assert scramble(Random(42), word) == word

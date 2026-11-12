@@ -31,6 +31,7 @@ from modules.render.primitives import (
 )
 from modules.render.shapes import draw_shape
 from modules.spec import Spec
+from modules.vocab import VocabItem, image_path
 
 
 def draw_grid(
@@ -1167,3 +1168,102 @@ def draw_match_answers(
     draw_match(c, spec, problems, is_answer=True, page_num=page_num, total_pages=total_pages)
 
 
+def _picture_header(c: Canvas, spec: Spec, topic: str, is_answer: bool, count: int) -> None:
+    """Draw the shared chrome for a picture practice sheet or its answer key."""
+    draw_header(
+        c,
+        title=t("answer_key_title" if is_answer else f"{topic}_title", lang=spec.lang),
+        subtitle=t(
+            f"{topic}_answer_subtitle" if is_answer else f"{topic}_subtitle", lang=spec.lang,
+        ),
+        instruction=t(
+            "answer_key_instruction" if is_answer else f"{topic}_instruction", lang=spec.lang,
+        ),
+        lang=spec.lang,
+        is_answer=is_answer,
+        score_max=None if is_answer else count,
+    )
+
+
+def _picture_cards(c: Canvas, count: int, cols: int):
+    """Draw the four-row picture grid and yield each card's position and size."""
+    gap = 12.0
+    top = PAGE_H - 84.0
+    card_w = (CONTENT_W - (cols - 1) * gap) / cols
+    card_h = (top - 44.0 - 3 * gap) / 4
+    for index in range(count):
+        x = MARGIN_X + index % cols * (card_w + gap)
+        y = top - (index // cols + 1) * card_h - index // cols * gap
+        rounded_box(c, x, y, card_w, card_h, radius=6.0, fill=0)
+        badge_number(c, x + 14.0, y + card_h - 14.0, index + 1)
+        yield index, x, y, card_w, card_h
+
+
+def draw_first_letter(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[VocabItem],
+    is_answer: bool,
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render twelve pictures with a first-letter box and completed words on the key."""
+    _picture_header(c, spec, "first_letter", is_answer, len(problems))
+    for index, x, y, width, _height in _picture_cards(c, len(problems), cols=3):
+        item = problems[index]
+        word = (item.ms if spec.lang == "ms" else item.en).upper()
+        c.drawImage(
+            str(image_path(item)), x + (width - 96.0) / 2, y + 58.0,
+            width=96.0, height=96.0, preserveAspectRatio=True, mask=None,
+        )
+        box_size = 28.0
+        c.setFont("Helvetica-Bold", 17)
+        suffix_width = c.stringWidth(word[1:], "Helvetica-Bold", 17)
+        box_x = x + (width - box_size - 5.0 - suffix_width) / 2
+        rounded_box(
+            c, box_x, y + 22.0, box_size, box_size, radius=3.0,
+            fill=int(is_answer), fill_color=COLOR_ANSWER_BG,
+        )
+        if is_answer:
+            c.setFillColor(COLOR_BLACK)
+            c.drawCentredString(box_x + box_size / 2, y + 30.0, word[0])
+            c.setFillColor(COLOR_LIGHT)
+            c.drawString(box_x + box_size + 5.0, y + 30.0, word[1:])
+    draw_footer(c, page_num=page_num, total_pages=total_pages, lang=spec.lang)
+
+
+def draw_guess_word(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[tuple[VocabItem, str]],
+    is_answer: bool,
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render eight pictures with letter boxes and optional pre-generated scrambled hints."""
+    _picture_header(c, spec, "guess_word", is_answer, len(problems))
+    for index, x, y, width, _height in _picture_cards(c, len(problems), cols=2):
+        item, hint = problems[index]
+        word = (item.ms if spec.lang == "ms" else item.en).upper()
+        c.drawImage(
+            str(image_path(item)), x + (width - 110.0) / 2, y + 54.0,
+            width=110.0, height=110.0, preserveAspectRatio=True, mask=None,
+        )
+        box_size = 26.0
+        box_gap = 3.0
+        start_x = x + (width - len(word) * box_size - (len(word) - 1) * box_gap) / 2
+        c.setFont("Helvetica-Bold", 17)
+        for letter_index, letter in enumerate(word):
+            box_x = start_x + letter_index * (box_size + box_gap)
+            rounded_box(
+                c, box_x, y + 23.0, box_size, box_size, radius=3.0,
+                fill=int(is_answer), fill_color=COLOR_ANSWER_BG,
+            )
+            if is_answer:
+                c.setFillColor(COLOR_BLACK)
+                c.drawCentredString(box_x + box_size / 2, y + 30.0, letter)
+        if spec.guess_hint:
+            c.setFont("Helvetica", 10)
+            c.setFillColor(COLOR_MID)
+            c.drawCentredString(x + width / 2, y + 8.0, " ".join(hint.upper()))
+    draw_footer(c, page_num=page_num, total_pages=total_pages, lang=spec.lang)

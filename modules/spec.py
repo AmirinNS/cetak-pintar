@@ -5,9 +5,11 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import Any
 
+from modules.vocab import THEMES, items_for
+
 VALID_TOPICS: tuple[str, ...] = (
     "grid", "count", "add", "sub", "sifir_ref", "sifir", "div",
-    "trace", "missing", "match",
+    "trace", "missing", "match", "first_letter", "guess_word",
 )
 VALID_LANGUAGES: tuple[str, ...] = ("ms", "en")
 VALID_ABC_CASES: tuple[str, ...] = ("upper", "lower")
@@ -36,6 +38,7 @@ SCALAR_KEYS: frozenset[str] = frozenset(
         "div_rem",
         "abc_case",
         "missing_blanks",
+        "guess_hint",
     }
 )
 
@@ -75,9 +78,10 @@ PRESETS: dict[str, dict[str, Any]] = {
         "div_rem": 0,
     },
     "abc": {
-        "t": ("trace", "missing", "match"),
+        "t": ("trace", "missing", "match", "first_letter"),
         "abc_case": "upper",
         "missing_blanks": 1,
+        "themes": THEMES,
     },
 }
 
@@ -111,6 +115,8 @@ class Spec:
     div_rem: int = 0
     abc_case: str = "upper"
     missing_blanks: int = 1
+    themes: tuple[str, ...] = THEMES
+    guess_hint: int = 1
 
     def __post_init__(self) -> None:
         if not isinstance(self.t, tuple):
@@ -121,6 +127,8 @@ class Spec:
             object.__setattr__(self, "sifir_tables", tuple(self.sifir_tables))
         if not isinstance(self.div_divisors, tuple):
             object.__setattr__(self, "div_divisors", tuple(self.div_divisors))
+        if not isinstance(self.themes, tuple):
+            object.__setattr__(self, "themes", tuple(self.themes))
 
         # Reset options of unselected topics to canonical defaults
         if "grid" not in self.t:
@@ -147,6 +155,10 @@ class Spec:
             object.__setattr__(self, "abc_case", "upper")
         if "missing" not in self.t:
             object.__setattr__(self, "missing_blanks", 1)
+        if "first_letter" not in self.t and "guess_word" not in self.t:
+            object.__setattr__(self, "themes", THEMES)
+        if "guess_word" not in self.t:
+            object.__setattr__(self, "guess_hint", 1)
 
     @property
     def topics(self) -> tuple[str, ...]:
@@ -581,7 +593,40 @@ def parse_spec(data: Any) -> tuple[Spec | None, list[tuple[str, str]]]:
         elif "missing_blanks" in preset_dict:
             missing_blanks = int(preset_dict["missing_blanks"])
 
-    # 13. Cross-field: pages >= min_pages for selected topics
+    # 13. Picture options
+    themes: tuple[str, ...] = THEMES
+    guess_hint: int = 1
+    if "first_letter" in selected_topics or "guess_word" in selected_topics:
+        if "themes" in raw_map:
+            parsed_themes = [
+                part.strip() for item in raw_map["themes"] for part in item.split(",")
+                if part.strip()
+            ]
+            if any(theme not in THEMES for theme in parsed_themes):
+                errors.append(("themes", "invalid_choice"))
+            elif not parsed_themes:
+                errors.append(("themes", "empty_themes"))
+            else:
+                themes = tuple(theme for theme in THEMES if theme in parsed_themes)
+        elif "themes" in preset_dict:
+            themes = tuple(theme for theme in THEMES if theme in preset_dict["themes"])
+
+        required_items = 12 if "first_letter" in selected_topics else 8
+        if len(items_for(themes)) < required_items:
+            errors.append(("themes", "insufficient_items"))
+
+    if "guess_word" in selected_topics:
+        if "guess_hint" in raw_map:
+            if len(raw_map["guess_hint"]) == 1:
+                val_str = raw_map["guess_hint"][0].strip()
+                if val_str in ("0", "1"):
+                    guess_hint = int(val_str)
+                else:
+                    errors.append(("guess_hint", "invalid_choice"))
+        elif "guess_hint" in preset_dict:
+            guess_hint = int(preset_dict["guess_hint"])
+
+    # 14. Cross-field: pages >= min_pages for selected topics
     if resolved_topics is not None and pages_valid:
         ref_count = math.ceil(len(sifir_tables) / 6) if "sifir_ref" in selected_topics else 0
         practice_count = len([t for t in selected_topics if t != "sifir_ref"])
@@ -615,6 +660,8 @@ def parse_spec(data: Any) -> tuple[Spec | None, list[tuple[str, str]]]:
         div_rem=div_rem,
         abc_case=abc_case,
         missing_blanks=missing_blanks,
+        themes=themes,
+        guess_hint=guess_hint,
     )
     return spec, []
 
@@ -662,5 +709,11 @@ def spec_to_query(spec: Spec) -> str:
 
     if "missing" in spec.t:
         params.append(("missing_blanks", str(spec.missing_blanks)))
+
+    if "first_letter" in spec.t or "guess_word" in spec.t:
+        params.append(("themes", ",".join(spec.themes)))
+
+    if "guess_word" in spec.t:
+        params.append(("guess_hint", str(spec.guess_hint)))
 
     return "&".join(f"{k}={v}" for k, v in params)

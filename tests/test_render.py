@@ -14,7 +14,7 @@ from pypdf import PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen.canvas import Canvas
 
-from modules.alphabet import match_sets, missing_rows
+from modules.alphabet import match_sets, missing_rows, picture_items, scramble
 from modules.i18n import t
 from modules.layout import MATCH_PAIRS, cards_per_sheet, plan_sheets
 from modules.problems import (
@@ -683,15 +683,15 @@ def test_alphabet_page_counts_and_structure(
 
 
 def test_abc_preset_rendering() -> None:
-    """Preset abc expands to trace, missing, match with 4 content + 2 answer pages."""
+    """Preset abc includes first_letter with four content and three answer pages."""
     spec, errors = parse_spec("preset=abc&seed=1")
     assert errors == []
     sheets = plan_sheets(spec)
-    assert len(sheets) == 6  # 4 content (trace 0, missing 0, match 0, trace 1) + 2 answers
+    assert len(sheets) == 7
 
     pdf_bytes = render(spec)
     reader = PdfReader(io.BytesIO(pdf_bytes))
-    assert len(reader.pages) == 6
+    assert len(reader.pages) == 7
 
     # Verify trace sheets have no answer sheet, and missing/match have answer sheets
     p1_text = reader.pages[0].extract_text()
@@ -701,13 +701,14 @@ def test_abc_preset_rendering() -> None:
     p3_text = reader.pages[2].extract_text()
     assert "PADANKAN HURUF" in p3_text
     p4_text = reader.pages[3].extract_text()
-    assert "SURIH HURUF" in p4_text
+    assert "HURUF PERTAMA" in p4_text
     p5_text = reader.pages[4].extract_text()
     assert "SKEMA JAWAPAN" in p5_text
     assert "Jawapan Huruf Tertinggal" in p5_text
     p6_text = reader.pages[5].extract_text()
     assert "SKEMA JAWAPAN" in p6_text
     assert "Jawapan Padankan Huruf" in p6_text
+    assert "Jawapan Huruf Pertama" in reader.pages[6].extract_text()
 
 
 @pytest.mark.parametrize("case", ["upper", "lower"])
@@ -863,3 +864,100 @@ def test_match_canvas_connecting_lines() -> None:
         assert pytest.approx(y2, 0.1) == expected_y_right
 
 
+
+
+@pytest.mark.parametrize("topic", ["first_letter", "guess_word"])
+@pytest.mark.parametrize("lang", ["ms", "en"])
+@pytest.mark.parametrize("hint", [0, 1])
+def test_picture_answers_and_hints_in_each_card(topic, lang, hint):
+    spec = Spec(t=(topic,), pages=1, lang=lang, guess_hint=hint, seed=42)
+    rng = Random(spec.seed)
+    items = picture_items(rng, spec.themes, cards_per_sheet(spec, topic))
+    hints = [scramble(rng, getattr(item, lang)) for item in items] if topic == "guess_word" else []
+    reader = PdfReader(io.BytesIO(render(spec)))
+    assert len(reader.pages) == len(plan_sheets(spec)) == 2
+    content_runs = _page_text_positions(reader.pages[0])
+    answer_runs = _page_text_positions(reader.pages[1])
+    cols = 3 if topic == "first_letter" else 2
+    gap = 12.0
+    width = (CONTENT_W - (cols - 1) * gap) / cols
+    height = (PAGE_H - 84.0 - 44.0 - 3 * gap) / 4
+    for index, item in enumerate(items):
+        x = MARGIN_X + index % cols * (width + gap)
+        y = PAGE_H - 84.0 - (index // cols + 1) * height - index // cols * gap
+        answer_letters = [
+            text for text, tx, ty in answer_runs
+            if x <= tx <= x + width and y + 20 <= ty <= y + 42
+        ]
+        assert "".join(answer_letters) == getattr(item, lang)
+        content_letters = [
+            text for text, tx, ty in content_runs
+            if x <= tx <= x + width and y + 20 <= ty <= y + 42
+        ]
+        assert content_letters == []
+        if topic == "guess_word":
+            expected_hint = " ".join(hints[index])
+            for runs in (content_runs, answer_runs):
+                drawn_hints = [
+                    text for text, tx, ty in runs
+                    if x <= tx <= x + width and y <= ty < y + 20
+                ]
+                assert drawn_hints == ([expected_hint] if hint else [])
+
+
+@pytest.mark.parametrize("ans", [0, 1])
+def test_picture_mixed_page_counts(ans):
+    spec = Spec(t=("first_letter", "guess_word"), pages=5, ans=ans, seed=42)
+    reader = PdfReader(io.BytesIO(render(spec)))
+    assert len(reader.pages) == len(plan_sheets(spec)) == 5 * (1 + ans)
+
+
+def test_picture_payload_and_scrambled_hints_reused(monkeypatch):
+    received = []
+    calls = []
+
+    def record(c, spec, problems, is_answer, page_num, total_pages):
+        received.append((problems, is_answer))
+
+    def count_scramble(rng, word):
+        calls.append(word)
+        return scramble(rng, word)
+
+    monkeypatch.setattr("modules.render.pdf.draw_guess_word", record)
+    monkeypatch.setattr("modules.render.pdf.scramble", count_scramble)
+    render(Spec(t=("guess_word",), pages=2, seed=42))
+    assert len(calls) == 16
+    assert len(received) == 4
+    assert [is_answer for _, is_answer in received] == [False, False, True, True]
+    assert received[0][0] is received[2][0]
+    assert received[1][0] is received[3][0]
+
+
+@pytest.mark.parametrize("topic", ["first_letter", "guess_word"])
+def test_picture_determinism_across_hash_seeds(topic):
+    code = f"""
+import sys
+from modules.spec import Spec
+from modules.render.pdf import render
+sys.stdout.buffer.write(render(Spec(t=({topic!r},), pages=2, seed=42)))
+"""
+    outputs = [subprocess.run(
+        [sys.executable, "-c", code], env=dict(os.environ, PYTHONHASHSEED=hash_seed),
+        capture_output=True, check=True,
+    ).stdout for hash_seed in ("0", "123456789")]
+    assert outputs[0].startswith(b"%PDF")
+    assert outputs[0] == outputs[1]
+
+
+def test_picture_maximum_pdf_size_and_image_reuse():
+    spec = Spec(t=("first_letter", "guess_word"), pages=20, ans=1, seed=42)
+    pdf = render(spec)
+    reader = PdfReader(io.BytesIO(pdf))
+    assert len(reader.pages) == 40
+    assert len(pdf) < 3_000_000
+    images = set()
+    for page in reader.pages:
+        for reference in page["/Resources"]["/XObject"].values():
+            if reference.get_object()["/Subtype"] == "/Image":
+                images.add(reference.idnum)
+    assert len(images) <= 49  # 48 vocabulary images plus the shared footer logo.

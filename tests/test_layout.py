@@ -215,3 +215,20 @@ def test_alphabet_with_fixed_reference_sheets():
 @pytest.mark.parametrize("topic, count", [("trace", 4), ("missing", 12), ("match", 3)])
 def test_alphabet_cards_per_sheet(topic, count):
     assert cards_per_sheet(Spec(t=(topic,)), topic) == count
+
+
+@pytest.mark.parametrize("topic,count", [("first_letter", 12), ("guess_word", 8)])
+def test_picture_cards_and_answers(topic, count):
+    spec = Spec(t=(topic,), pages=1)
+    assert cards_per_sheet(spec, topic) == count
+    assert plan_sheets(spec) == [("content", topic, 0), ("answer", topic, 0)]
+
+
+def test_picture_round_robin_with_trace():
+    spec = Spec(t=("trace", "first_letter", "guess_word"), pages=5)
+    assert plan_sheets(spec) == [
+        ("content", "trace", 0), ("content", "first_letter", 0),
+        ("content", "guess_word", 0), ("content", "trace", 1),
+        ("content", "first_letter", 1), ("answer", "first_letter", 0),
+        ("answer", "guess_word", 0), ("answer", "first_letter", 1),
+    ]

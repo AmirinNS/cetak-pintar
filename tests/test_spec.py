@@ -465,13 +465,14 @@ def test_alphabet_topics_in_canonical_order():
 
 def test_abc_preset_expansion_and_overrides():
     assert expand_preset("abc") == {
-        "t": ("trace", "missing", "match"),
+        "t": ("trace", "missing", "match", "first_letter"),
         "abc_case": "upper",
         "missing_blanks": 1,
+        "themes": ("animals", "fruits", "vehicles", "sports"),
     }
     spec, errors = parse_spec({"preset": "abc"})
     assert errors == []
-    assert spec.t == ("trace", "missing", "match")
+    assert spec.t == ("trace", "missing", "match", "first_letter")
     assert spec.abc_case == "upper"
     assert spec.missing_blanks == 1
 
@@ -569,3 +570,88 @@ def test_existing_math_query_unchanged():
         "&count_shapes=star,circle,apple,fish,flower"
         "&add_digits=1&add_regroup=0&sub_digits=1&sub_borrow=0"
     )
+
+
+@pytest.mark.parametrize("topics", ["first_letter", "guess_word", "guess_word,first_letter"])
+def test_picture_themes_canonical_order_and_round_trip(topics):
+    spec, errors = parse_spec({
+        "t": topics, "themes": ["", "sports,animals", "animals,vehicles"],
+        "guess_hint": 0, "seed": 42,
+    })
+    assert errors == []
+    assert spec.themes == ("animals", "vehicles", "sports")
+    assert spec.t == tuple(t for t in ("first_letter", "guess_word") if t in topics)
+    query = spec_to_query(spec)
+    assert "themes=animals,vehicles,sports" in query
+    assert ("guess_hint=0" in query) == ("guess_word" in spec.t)
+    assert parse_spec(query) == (spec, [])
+
+
+def test_picture_topics_appended_after_existing_topics():
+    spec, errors = parse_spec({
+        "t": "guess_word,match,first_letter,div,trace,missing", "pages": 6,
+    })
+    assert errors == []
+    assert spec.t == ("div", "trace", "missing", "match", "first_letter", "guess_word")
+    assert spec.themes == ("animals", "fruits", "vehicles", "sports")
+    assert spec.guess_hint == 1
+
+
+@pytest.mark.parametrize("value,error", [
+    ("", "empty_themes"), (", ,", "empty_themes"), ("animals,space", "invalid_choice"),
+])
+def test_picture_themes_errors(value, error):
+    spec, errors = parse_spec({"t": "first_letter", "themes": value})
+    assert spec is None
+    assert ("themes", error) in errors
+
+
+@pytest.mark.parametrize("value", [0, 1])
+def test_guess_hint_valid(value):
+    spec, errors = parse_spec({"t": "guess_word", "guess_hint": value})
+    assert errors == []
+    assert spec.guess_hint == value
+
+
+@pytest.mark.parametrize("value", ["", "2", "-1", "yes", "1.0"])
+def test_guess_hint_invalid(value):
+    spec, errors = parse_spec({"t": "guess_word", "guess_hint": value})
+    assert spec is None
+    assert ("guess_hint", "invalid_choice") in errors
+
+
+def test_guess_hint_repeated():
+    spec, errors = parse_spec({"t": "guess_word", "guess_hint": [0, 1]})
+    assert spec is None
+    assert ("guess_hint", "repeated") in errors
+
+
+@pytest.mark.parametrize("topics", [("add",), ("trace",), ("first_letter",)])
+def test_unused_picture_options_reset_and_drop(topics):
+    spec = Spec(t=topics, themes=["fruits"], guess_hint=0)
+    assert spec.guess_hint == 1
+    query = spec_to_query(spec)
+    assert "guess_hint" not in query
+    if "first_letter" in topics:
+        assert spec.themes == ("fruits",)
+    else:
+        assert spec.themes == ("animals", "fruits", "vehicles", "sports")
+        assert "themes" not in query
+    assert parse_spec(query) == (spec, [])
+
+
+def test_inactive_picture_options_ignore_invalid_values():
+    spec, errors = parse_spec({"t": "add", "themes": "space", "guess_hint": "yes"})
+    assert errors == []
+    assert parse_spec(spec_to_query(spec)) == (spec, [])
+    spec, errors = parse_spec({"t": "first_letter", "guess_hint": "yes"})
+    assert errors == []
+    assert spec.guess_hint == 1
+
+
+@pytest.mark.parametrize("topic", ["first_letter", "guess_word"])
+def test_picture_themes_require_one_sheet_capacity(monkeypatch, topic):
+    monkeypatch.setattr("modules.spec.items_for", lambda themes: ())
+    spec, errors = parse_spec({"t": topic, "themes": "animals"})
+    assert spec is None
+    assert ("themes", "insufficient_items") in errors

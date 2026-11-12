@@ -96,6 +96,41 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         }
+
+        // Themes group (shared between first_letter and guess_word)
+        const themesFieldset = document.getElementById("group-topic-themes");
+        if (themesFieldset) {
+            const hasPictureTopic = checkedTopics.has("first_letter") || checkedTopics.has("guess_word");
+            if (hasPictureTopic) {
+                themesFieldset.classList.remove("d-none");
+                const themesField = document.getElementById("field-themes");
+                if (themesField) {
+                    themesField.querySelectorAll("input").forEach((el) => {
+                        el.disabled = false;
+                    });
+                }
+                const guessHintField = document.getElementById("field-guess_hint");
+                if (guessHintField) {
+                    const hasGuessWord = checkedTopics.has("guess_word");
+                    if (hasGuessWord) {
+                        guessHintField.classList.remove("d-none");
+                        guessHintField.querySelectorAll("input, select").forEach((el) => {
+                            el.disabled = false;
+                        });
+                    } else {
+                        guessHintField.classList.add("d-none");
+                        guessHintField.querySelectorAll("input, select").forEach((el) => {
+                            el.disabled = true;
+                        });
+                    }
+                }
+            } else {
+                themesFieldset.classList.add("d-none");
+                themesFieldset.querySelectorAll("input, select").forEach((el) => {
+                    el.disabled = true;
+                });
+            }
+        }
     }
 
     // Initialize fieldset visibility and disabled state on DOM ready
@@ -196,6 +231,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (checkedTopics.has("missing")) {
             if (formData.has("missing_blanks")) {
                 searchParams.set("missing_blanks", formData.get("missing_blanks"));
+            }
+        }
+
+        if (checkedTopics.has("first_letter") || checkedTopics.has("guess_word")) {
+            const themes = formData.getAll("themes").filter((th) => th.trim() !== "");
+            searchParams.set("themes", themes.join(","));
+        }
+
+        if (checkedTopics.has("guess_word")) {
+            if (formData.has("guess_hint")) {
+                searchParams.set("guess_hint", formData.get("guess_hint"));
             }
         }
 

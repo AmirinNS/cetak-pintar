@@ -4,6 +4,8 @@ import string
 from dataclasses import dataclass
 from random import Random
 
+from modules.vocab import VocabItem, items_for
+
 
 @dataclass(frozen=True)
 class MissingRow:
@@ -98,3 +100,24 @@ def match_sets(rng: Random, n_sets: int, pairs: int) -> list[MatchSet]:
         pair_indices = tuple(right_letters.index(c.lower()) for c in left_letters)
         sets.append(MatchSet(left=left_letters, right=right_letters, pairs=pair_indices))
     return sets
+
+
+def picture_items(rng: Random, themes: tuple[str, ...], n: int) -> list[VocabItem]:
+    """Sample picture items, using fresh shuffled passes if n exceeds the pool."""
+    pool = items_for(themes)
+    items: list[VocabItem] = []
+    while len(items) < n:
+        items.extend(rng.sample(pool, min(n - len(items), len(pool))))
+    return items
+
+
+def scramble(rng: Random, word: str) -> str:
+    """Shuffle letters, swapping two distinct letters if the shuffle is unchanged."""
+    letters = list(word)
+    rng.shuffle(letters)
+    if "".join(letters) == word:
+        for index, letter in enumerate(letters):
+            if letter != letters[0]:
+                letters[0], letters[index] = letters[index], letters[0]
+                break
+    return "".join(letters)

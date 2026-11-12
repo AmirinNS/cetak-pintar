@@ -1,6 +1,6 @@
 # CetakPintar
 
-Jana lembaran kerja matematik dan abjad A4 yang sedia dicetak untuk murid prasekolah dan sekolah rendah, lengkap dengan skema jawapan. Lembaran abjad dan bertema gambar akan ditambah dalam keluaran akan datang. Tersedia sebagai aplikasi web yang mudah dikongsi dan antara muka baris perintah (CLI).
+Jana lembaran kerja matematik dan abjad A4 yang sedia dicetak untuk murid prasekolah dan sekolah rendah, lengkap dengan skema jawapan. Termasuk lembaran abjad dan teka gambar mengikut tema (haiwan, buah-buahan, kenderaan, sukan). Tersedia sebagai aplikasi web yang mudah dikongsi dan antara muka baris perintah (CLI).
 
 [English version below](#cetakpintar-english)
 
@@ -38,6 +38,8 @@ Berikut adalah contoh halaman latihan pertama dan halaman jawapan bagi setiap pr
 | **Tahun 1 (t1)** | ![Contoh Latihan t1](static/img/sample-t1-practice.png) | ![Contoh Jawapan t1](static/img/sample-t1-answer.png) |
 | **Tahun 2 (t2)** | ![Contoh Latihan t2](static/img/sample-t2-practice.png) | ![Contoh Jawapan t2](static/img/sample-t2-answer.png) |
 | **Tahun 3 (t3)** | ![Contoh Latihan t3](static/img/sample-t3-practice.png) | ![Contoh Jawapan t3](static/img/sample-t3-answer.png) |
+| **Abjad (abc)** | ![Contoh Latihan abc](static/img/sample-abc-practice.png) | ![Contoh Jawapan abc](static/img/sample-abc-answer.png) |
+| **Teka Perkataan (guess_word)** | ![Contoh Latihan gambar](static/img/sample-pictures-practice.png) | ![Contoh Jawapan gambar](static/img/sample-pictures-answer.png) |
 
 ---
 
@@ -82,6 +84,12 @@ uv run python cli.py --topics sifir --sifir-tables 2,3,5 --sifir-n 12 --no-answe
 
 # Lembaran mengira objek bergambar (maksimum 10 objek)
 uv run python cli.py --topics count --count-max 10 --pages 2 -o kira-objek.pdf
+
+# Pratetap abjad (surih, huruf tertinggal, padankan, huruf pertama)
+uv run python cli.py --preset abc --seed 7 -o abjad.pdf
+
+# Teka perkataan bertema haiwan dan kenderaan, tanpa petunjuk huruf, dalam Bahasa Inggeris
+uv run python cli.py --topics guess_word --themes animals,vehicles --guess-hint 0 --lang en --pages 2 -o teka-perkataan.pdf
 ```
 
 #### 3. Menggunakan Docker
@@ -102,7 +110,9 @@ Aplikasi sedia diakses di `http://localhost:5000`.
 
 ### Jenis Lembaran Kerja
 
-CetakPintar menawarkan tujuh jenis komponen latihan matematik:
+CetakPintar menawarkan tujuh topik matematik dan lima topik abjad.
+
+#### Matematik
 
 | Kod Topik | Nama Topik | Penerangan dan Julat Pilihan |
 |---|---|---|
@@ -114,11 +124,23 @@ CetakPintar menawarkan tujuh jenis komponen latihan matematik:
 | `sifir` | Latihan Sifir | Latihan tubi sifir darab terpilih (daripada sifir 1 hingga 12). Bilangan soalan setiap helaian boleh dilaraskan sehingga 24 soalan. |
 | `div` | Bahagi Bentuk Lazim | Operasi bahagi bentuk lazim untuk dividen 2 atau 3 digit dengan pembahagi 2 hingga 9. Menyokong pembahagian tepat atau berbaki. Skema jawapan memaparkan jalan kerja lajur penuh langkah demi langkah. |
 
+#### Abjad dan kosa kata
+
+| Kod Topik | Nama Topik | Penerangan dan Julat Pilihan |
+|---|---|---|
+| `trace` | Surih Huruf | Empat huruf setiap halaman, satu huruf contoh diikuti huruf putus-putus untuk disurih. Halaman seterusnya menyambung abjad dan berulang selepas Z. Pilihan huruf besar atau huruf kecil (`abc_case`). Tiada skema jawapan. |
+| `missing` | Huruf Tertinggal | 12 baris huruf berturutan dengan 1, 2, atau 3 petak kosong setiap baris (`missing_blanks`). Mengikut pilihan huruf besar atau kecil. |
+| `match` | Padankan Huruf | Tiga set setiap halaman. Murid melukis garisan untuk memadankan 6 huruf besar dengan huruf kecil yang sepadan. |
+| `first_letter` | Huruf Pertama | 12 gambar setiap halaman. Murid menulis huruf pertama nama gambar. Skema jawapan memaparkan perkataan penuh. |
+| `guess_word` | Teka Perkataan | 8 gambar setiap halaman dengan satu petak bagi setiap huruf. Huruf yang dikacau boleh dipaparkan di bawah petak sebagai petunjuk (`guess_hint`, 1 untuk ya, 0 untuk tidak). |
+
+Topik `first_letter` dan `guess_word` menggunakan 48 lukisan garis hitam putih dalam empat tema (`themes`): haiwan (`animals`), buah-buahan (`fruits`), kenderaan (`vehicles`), dan sukan (`sports`). Pilih satu atau lebih tema. Perkataan mengikut bahasa lembaran, contohnya KUCING dalam Bahasa Melayu dan CAT dalam Bahasa Inggeris.
+
 ---
 
 ### Pratetap Tersedia
 
-Untuk memudahkan pemilihan, tiga pratetap disediakan berasaskan julat sebenar topik sekolah rendah:
+Untuk memudahkan pemilihan, empat pratetap disediakan. Tiga untuk matematik berasaskan julat sebenar topik sekolah rendah, dan satu untuk abjad:
 
 * **Pratetap t1 (Diinspirasikan oleh topik Tahun 1):**
   * Julat dan kandungan: Carta nombor 1 hingga 100 (30 petak kosong), kira objek bergambar (sehingga 10 objek), tambah 1 digit tanpa kumpul semula, tolak 1 digit tanpa pinjam.
@@ -131,6 +153,10 @@ Untuk memudahkan pemilihan, tiga pratetap disediakan berasaskan julat sebenar to
 * **Pratetap t3 (Diinspirasikan oleh topik Tahun 3):**
   * Julat dan kandungan: Tambah 3 digit dengan kumpul semula, tolak 3 digit dengan pinjam, latihan sifir 6, 7, 8, dan 9 (12 soalan), bahagi 2 digit tepat dengan pembahagi 2 hingga 9 tanpa baki.
   * Halaman: 4 halaman kandungan dan 4 halaman skema jawapan.
+
+* **Pratetap abc (Abjad, untuk prasekolah dan Tahun 1):**
+  * Julat dan kandungan: Surih huruf besar, huruf tertinggal (1 petak setiap baris), padankan huruf besar dan kecil, huruf pertama dengan gambar daripada keempat-empat tema.
+  * Halaman: 4 halaman kandungan dan 3 halaman skema jawapan (surih huruf tiada jawapan).
 
 ---
 
@@ -175,7 +201,7 @@ Dilesenkan di bawah [Lesen MIT](LICENSE). Hak Cipta (c) 2026 Mohamad Khairulamir
 
 # CetakPintar (English)
 
-Generate print-ready A4 math and alphabet worksheets for preschool and primary school children, complete with answer keys. Alphabet and picture-theme sheets are on the roadmap. Available as a shareable web application and a command-line interface (CLI).
+Generate print-ready A4 math and alphabet worksheets for preschool and primary school children, complete with answer keys. Includes alphabet sheets and picture-word sheets by theme (animals, fruits, vehicles, sports). Available as a shareable web application and a command-line interface (CLI).
 
 ---
 
@@ -209,6 +235,8 @@ Below are authentic sample pages rendered directly from the application for each
 | **Tahun 1 (t1)** | ![Sample Practice Sheet t1](static/img/sample-t1-practice.png) | ![Sample Answer Sheet t1](static/img/sample-t1-answer.png) |
 | **Tahun 2 (t2)** | ![Sample Practice Sheet t2](static/img/sample-t2-practice.png) | ![Sample Answer Sheet t2](static/img/sample-t2-answer.png) |
 | **Tahun 3 (t3)** | ![Sample Practice Sheet t3](static/img/sample-t3-practice.png) | ![Sample Answer Sheet t3](static/img/sample-t3-answer.png) |
+| **Alphabet (abc)** | ![Sample Practice Sheet abc](static/img/sample-abc-practice.png) | ![Sample Answer Sheet abc](static/img/sample-abc-answer.png) |
+| **Guess the word (guess_word)** | ![Sample Practice Sheet pictures](static/img/sample-pictures-practice.png) | ![Sample Answer Sheet pictures](static/img/sample-pictures-answer.png) |
 
 ---
 
@@ -253,6 +281,12 @@ uv run python cli.py --topics sifir --sifir-tables 2,3,5 --sifir-n 12 --no-answe
 
 # Picture counting exercises up to 10 objects
 uv run python cli.py --topics count --count-max 10 --pages 2 -o counting-practice.pdf
+
+# Alphabet preset (tracing, missing letters, matching, first letter)
+uv run python cli.py --preset abc --seed 7 -o alphabet.pdf
+
+# Guess the word with animal and vehicle pictures, no letter hints, in English
+uv run python cli.py --topics guess_word --themes animals,vehicles --guess-hint 0 --lang en --pages 2 -o guess-the-word.pdf
 ```
 
 #### 3. Running with Docker
@@ -273,7 +307,9 @@ Access the application at `http://localhost:5000`.
 
 ### Worksheet Types Table
 
-CetakPintar supports seven modular worksheet topics:
+CetakPintar supports seven math topics and five alphabet topics.
+
+#### Math
 
 | Topic Code | Topic Name | Description and Configurable Ranges |
 |---|---|---|
@@ -285,11 +321,23 @@ CetakPintar supports seven modular worksheet topics:
 | `sifir` | Multiplication Drill | Randomized multiplication questions drawn from chosen tables (1 to 12). Configurable question count up to 24 per sheet. |
 | `div` | Long Division | Column-aligned long division problems with 2 or 3 digit dividends and divisors from 2 to 9. Supports exact division or required remainder. Answer keys show full intermediate subtraction steps. |
 
+#### Alphabet and vocabulary
+
+| Topic Code | Topic Name | Description and Configurable Ranges |
+|---|---|---|
+| `trace` | Letter Tracing | Four letters per page, each a solid model letter followed by dotted copies to trace. Later pages continue the alphabet and wrap after Z. Uppercase or lowercase (`abc_case`). Has no answer sheets. |
+| `missing` | Missing Letters | 12 rows of consecutive letters with 1, 2, or 3 blanks per row (`missing_blanks`). Follows the uppercase or lowercase choice. |
+| `match` | Match the Letters | Three sets per page. Children draw lines to match 6 uppercase letters with their lowercase pairs. |
+| `first_letter` | First Letter | 12 pictures per page. Children write the first letter of each picture's name. The answer key shows the full word. |
+| `guess_word` | Guess the Word | 8 pictures per page with one box per letter. Scrambled letters can be printed under the boxes as a hint (`guess_hint`, 1 for on, 0 for off). |
+
+The `first_letter` and `guess_word` topics use 48 black-and-white line drawings in four themes (`themes`): `animals`, `fruits`, `vehicles`, and `sports`. Pick one or more. Words follow the worksheet language, for example KUCING in Bahasa Melayu and CAT in English.
+
 ---
 
 ### Presets
 
-For convenient selection, three standard presets are provided, described by their actual mathematical ranges:
+For convenient selection, four presets are provided. Three cover math, described by their actual ranges, and one covers the alphabet:
 
 * **Preset t1 (Inspired by Tahun 1 topics):**
   * Scope: Number grid from 1 to 100 (30 blanks), picture counting up to 10 objects, 1-digit addition without regrouping, 1-digit subtraction without borrowing.
@@ -302,6 +350,10 @@ For convenient selection, three standard presets are provided, described by thei
 * **Preset t3 (Inspired by Tahun 3 topics):**
   * Scope: 3-digit addition with regrouping, 3-digit subtraction with borrowing, multiplication tables 6, 7, 8, and 9 (12 problems per page), 2-digit exact division with divisors 2 to 9 and zero remainder.
   * Page budget: 4 practice sheets and 4 answer sheets.
+
+* **Preset abc (Alphabet, for preschool and Tahun 1):**
+  * Scope: Uppercase letter tracing, missing letters (1 blank per row), uppercase and lowercase matching, first letter with pictures from all four themes.
+  * Page budget: 4 practice sheets and 3 answer sheets (tracing has no answer sheet).
 
 ---
 

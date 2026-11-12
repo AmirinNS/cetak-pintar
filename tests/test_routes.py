@@ -314,3 +314,53 @@ def test_alphabet_topics_cetak_and_error(client: FlaskClient) -> None:
     assert 'id="error-summary"' in html_bad_en
     assert 'href="#field-abc_case"' in html_bad_en
     assert "Invalid choice." in html_bad_en
+
+
+def test_picture_topics_cetak_pdf(client: FlaskClient) -> None:
+    """GET /cetak?t=first_letter,guess_word&seed=1&lang=en returns a PDF."""
+    resp = client.get("/cetak?t=first_letter,guess_word&seed=1&lang=en")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/pdf"
+    assert resp.data.startswith(b"%PDF-")
+
+
+def test_picture_topics_with_custom_themes_and_hint(client: FlaskClient) -> None:
+    """GET /cetak with custom themes and guess_hint returns a PDF."""
+    resp = client.get("/cetak?t=guess_word&themes=fruits,vehicles&guess_hint=0&seed=42&lang=ms")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/pdf"
+    assert resp.data.startswith(b"%PDF-")
+
+
+def test_picture_topics_invalid_inputs_return_400(client: FlaskClient) -> None:
+    """Invalid themes or guess_hint returns 400 with field error anchors."""
+    resp_themes = client.get("/cetak?t=first_letter&themes=invalid&seed=1&lang=ms")
+    assert resp_themes.status_code == 400
+    html_themes = resp_themes.data.decode("utf-8")
+    assert "Pilihan tidak sah." in html_themes
+    assert 'href="#field-themes"' in html_themes
+
+    resp_hint = client.get("/cetak?t=guess_word&guess_hint=9&seed=1&lang=en")
+    assert resp_hint.status_code == 400
+    html_hint = resp_hint.data.decode("utf-8")
+    assert "Invalid choice." in html_hint
+    assert 'href="#field-guess_hint"' in html_hint
+
+
+def test_language_switch_preserves_picture_options(client: FlaskClient) -> None:
+    """Language switcher link carries themes and guess_hint."""
+    from tests.test_form import parse_html
+
+    query = "t=first_letter,guess_word&themes=fruits,sports&guess_hint=0&seed=777&lang=ms"
+    resp = client.get(f"/?{query}")
+    assert resp.status_code == 200
+    parser = parse_html(resp.data.decode("utf-8"))
+
+    en_links = [link for link in parser.links if link.get("data-lang") == "en"]
+    assert len(en_links) == 1
+    href_en = en_links[0]["href"]
+    parsed_qs = urllib.parse.parse_qs(urllib.parse.urlparse(href_en).query)
+    assert parsed_qs.get("t") == ["first_letter,guess_word"]
+    assert parsed_qs.get("themes") == ["fruits,sports"]
+    assert parsed_qs.get("guess_hint") == ["0"]
+    assert parsed_qs.get("seed") == ["777"]

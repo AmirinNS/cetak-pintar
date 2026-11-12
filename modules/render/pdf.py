@@ -8,7 +8,7 @@ from random import Random
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen.canvas import Canvas
 
-from modules.alphabet import match_sets, missing_rows, trace_letters
+from modules.alphabet import match_sets, missing_rows, picture_items, scramble, trace_letters
 from modules.layout import MATCH_PAIRS, cards_per_sheet, plan_sheets
 from modules.problems import (
     addition,
@@ -24,7 +24,9 @@ from modules.render.pages import (
     draw_count_answers,
     draw_div,
     draw_div_answers,
+    draw_first_letter,
     draw_grid,
+    draw_guess_word,
     draw_match,
     draw_match_answers,
     draw_missing,
@@ -38,7 +40,10 @@ from modules.render.pages import (
 from modules.spec import Spec
 
 SUPPORTED_TOPICS: frozenset[str] = frozenset(
-    {"grid", "count", "add", "sub", "sifir_ref", "sifir", "div", "trace", "missing", "match"}
+    {
+        "grid", "count", "add", "sub", "sifir_ref", "sifir", "div", "trace", "missing", "match",
+        "first_letter", "guess_word",
+    }
 )
 
 
@@ -48,8 +53,7 @@ def render(spec: Spec) -> bytes:
     Uses A4 paper size, ReportLab invariant mode for byte-identical determinism,
     Helvetica font family, and sets PDF metadata Title and Author to 'CetakPintar'.
 
-    Raises NotImplementedError naming the topic if the spec contains topics
-    outside Phase D (grid, add, sub, sifir_ref, sifir, div).
+    Raises NotImplementedError naming any unsupported topic in the spec.
     """
     for topic in spec.t:
         if topic not in SUPPORTED_TOPICS:
@@ -119,6 +123,15 @@ def render(spec: Spec) -> bytes:
                 sheet_data[(topic, sheet_idx)] = match_sets(
                     rng, cards_per_sheet(spec, "match"), MATCH_PAIRS
                 )
+            elif topic in ("first_letter", "guess_word"):
+                items = picture_items(rng, spec.themes, cards_per_sheet(spec, topic))
+                if topic == "guess_word":
+                    sheet_data[(topic, sheet_idx)] = [
+                        (item, scramble(rng, item.ms if spec.lang == "ms" else item.en))
+                        for item in items
+                    ]
+                else:
+                    sheet_data[(topic, sheet_idx)] = items
 
     buf = io.BytesIO()
     c = Canvas(buf, pagesize=A4, invariant=1)
@@ -211,6 +224,10 @@ def render(spec: Spec) -> bytes:
                 draw_match_answers(c, spec, data, page_idx, total_pages)
             else:
                 draw_match(c, spec, data, False, page_idx, total_pages)
+        elif topic == "first_letter":
+            draw_first_letter(c, spec, data, is_answer, page_idx, total_pages)
+        elif topic == "guess_word":
+            draw_guess_word(c, spec, data, is_answer, page_idx, total_pages)
 
         c.showPage()
 

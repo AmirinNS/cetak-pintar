@@ -29,6 +29,8 @@ TOPIC_OPTIONS: tuple[tuple[str, str], ...] = (
     ("div_rem", "div_rem"),
     ("abc_case", "abc_case"),
     ("missing_blanks", "missing_blanks"),
+    ("themes", "themes"),
+    ("guess_hint", "guess_hint"),
 )
 
 
@@ -46,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--topics",
         help=(
             "comma-separated topics: grid, count, add, sub, sifir_ref, sifir, div, "
-            "trace, missing, match"
+            "trace, missing, match, first_letter, guess_word"
         ),
     )
     parser.add_argument("--pages", help="total content sheets, 1 to 20")
@@ -94,6 +96,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--missing-blanks",
         help="blanks per row for missing letters: 1, 2, or 3",
+    )
+    parser.add_argument(
+        "--themes",
+        help="comma-separated themes: animals, fruits, vehicles, sports",
+    )
+    parser.add_argument(
+        "--guess-hint",
+        choices=["0", "1"],
+        help="show scrambled letter hints for guess_word: 0 or 1 (default 1)",
     )
     parser.add_argument("-o", "--output", required=True, help="PDF path to write")
     return parser

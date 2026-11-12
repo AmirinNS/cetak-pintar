@@ -37,6 +37,10 @@ def cards_per_sheet(spec: Spec, topic: str) -> int:
         return 12
     if topic == "match":
         return 3
+    if topic == "first_letter":
+        return 12
+    if topic == "guess_word":
+        return 8
     raise ValueError(f"Unknown topic: {topic}")
 
 

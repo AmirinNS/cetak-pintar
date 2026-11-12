@@ -20,12 +20,19 @@ from modules.spec import (
     VALID_TOPICS,
     expand_preset,
 )
+from modules.vocab import THEMES
 
 MATH_TOPICS: tuple[str, ...] = ("grid", "count", "add", "sub", "sifir_ref", "sifir", "div")
-ABC_TOPICS: tuple[str, ...] = ("trace", "missing", "match")
+ABC_TOPICS: tuple[str, ...] = ("trace", "missing", "match", "first_letter", "guess_word")
 VALID_MISSING_BLANKS: tuple[int, ...] = (1, 2, 3)
 ALL_SIFIR_TABLES: tuple[int, ...] = tuple(range(1, 13))
 ALL_DIVISORS: tuple[int, ...] = tuple(range(2, 10))
+THEME_ICONS: dict[str, str] = {
+    "animals": "cat",
+    "fruits": "apple",
+    "vehicles": "car",
+    "sports": "tennis",
+}
 
 
 def resolve_seed(raw_seed: Any) -> int:
@@ -253,6 +260,25 @@ def build_form_context(
         else str(preset_dict.get("missing_blanks", 1))
     )
 
+    # Picture options
+    themes: list[str] = []
+    if "themes" in raw_map:
+        for item in raw_map["themes"]:
+            for part in item.split(","):
+                cleaned = part.strip()
+                if cleaned in THEMES and cleaned not in themes:
+                    themes.append(cleaned)
+    elif "themes" in preset_dict:
+        themes = list(preset_dict["themes"])
+    else:
+        themes = list(THEMES)
+
+    guess_hint_raw = (
+        raw_map["guess_hint"][0].strip()
+        if "guess_hint" in raw_map and raw_map["guess_hint"]
+        else str(preset_dict.get("guess_hint", 1))
+    )
+
     # Format errors
     field_errors: dict[str, str] = {}
     error_list: list[dict[str, str]] = []
@@ -295,6 +321,10 @@ def build_form_context(
             params.append(("abc_case", abc_case_raw))
         if "missing" in selected_topics:
             params.append(("missing_blanks", missing_blanks_raw))
+        if "first_letter" in selected_topics or "guess_word" in selected_topics:
+            params.append(("themes", ",".join(themes)))
+        if "guess_word" in selected_topics:
+            params.append(("guess_hint", guess_hint_raw))
         query = urllib.parse.urlencode(params)
         return f"/?{query}"
 
@@ -321,6 +351,8 @@ def build_form_context(
         "div_rem_val": div_rem_raw,
         "abc_case_val": abc_case_raw,
         "missing_blanks_val": missing_blanks_raw,
+        "themes": themes,
+        "guess_hint_val": guess_hint_raw,
         "field_errors": field_errors,
         "error_list": error_list,
         "has_errors": bool(errors),
@@ -334,6 +366,8 @@ def build_form_context(
         "VALID_SHAPES": VALID_SHAPES,
         "ALL_SIFIR_TABLES": ALL_SIFIR_TABLES,
         "ALL_DIVISORS": ALL_DIVISORS,
+        "THEMES": THEMES,
+        "THEME_ICONS": THEME_ICONS,
         "t": t,
         "lang_url": lang_url,
     }

@@ -305,3 +305,64 @@ def test_cli_invalid_abc_case_reports_error(tmp_path, capsys) -> None:
     assert code == 2
     assert "abc_case: invalid_choice" in capsys.readouterr().err
     assert not output.exists()
+
+
+def test_cli_picture_topics_with_themes_and_guess_hint(tmp_path, capsys) -> None:
+    """CLI writes a PDF with --topics first_letter,guess_word, custom themes, and guess-hint 0."""
+    output = tmp_path / "picture_sheet.pdf"
+    code = main([
+        "--topics", "first_letter,guess_word",
+        "--themes", "fruits,vehicles,sports",
+        "--guess-hint", "0",
+        "--pages", "2",
+        "--seed", "1",
+        "-o", str(output),
+    ])
+    assert code == 0
+    assert output.exists()
+    assert output.read_bytes()[:5] == b"%PDF-"
+    query = capsys.readouterr().out.strip()
+    assert "t=first_letter,guess_word" in query
+    assert "themes=fruits,vehicles,sports" in query
+    assert "guess_hint=0" in query
+
+
+def test_cli_all_themes_empty_reports_error(tmp_path, capsys) -> None:
+    """CLI reports field error when themes is empty."""
+    output = tmp_path / "bad.pdf"
+    code = main([
+        "--topics", "first_letter",
+        "--themes", "",
+        "-o", str(output),
+    ])
+    assert code == 2
+    assert "themes: empty_themes" in capsys.readouterr().err
+    assert not output.exists()
+
+
+def test_cli_invalid_guess_hint_rejected(tmp_path) -> None:
+    """Argparse rejects invalid guess-hint value with code 2."""
+    output = tmp_path / "bad.pdf"
+    with pytest.raises(SystemExit) as exc_info:
+        main([
+            "--topics", "guess_word",
+            "--guess-hint", "invalid",
+            "-o", str(output),
+        ])
+    assert exc_info.value.code == 2
+    assert not output.exists()
+
+
+def test_cli_preset_abc_includes_first_letter(tmp_path, capsys) -> None:
+    """CLI with preset abc generates worksheet with first_letter topic."""
+    output = tmp_path / "abc_preset.pdf"
+    code = main([
+        "--preset", "abc",
+        "--seed", "10",
+        "-o", str(output),
+    ])
+    assert code == 0
+    assert output.exists()
+    query = capsys.readouterr().out.strip()
+    assert "t=trace,missing,match,first_letter" in query
+    assert "themes=animals,fruits,vehicles,sports" in query
