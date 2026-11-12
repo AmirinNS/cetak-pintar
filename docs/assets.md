@@ -1,6 +1,6 @@
 # Asset Provenance & Generation Prompts
 
-These images are original generated assets for the CetakKira project. They were generated using Google Antigravity's image generation tool (`gemini-3.1-flash-image`) and post-processed (cropped, resized, and converted to WebP) with Pillow.
+These images are original generated assets for the CetakPintar project. They were generated using Google Antigravity's image generation tool (`gemini-3.1-flash-image`) and post-processed (cropped, resized, and converted to WebP) with Pillow.
 
 ## Image Assets Table
 

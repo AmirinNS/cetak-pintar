@@ -102,7 +102,7 @@ def test_not_implemented_topics() -> None:
 
 
 def test_page_count_a4_and_metadata() -> None:
-    """PDF must match plan_sheets page count, A4 geometry, and CetakKira metadata."""
+    """PDF must match plan_sheets page count, A4 geometry, and CetakPintar metadata."""
     spec = Spec(t=("grid", "add", "sub"), pages=3, ans=1, seed=42)
     expected_sheets = plan_sheets(spec)
 
@@ -115,8 +115,8 @@ def test_page_count_a4_and_metadata() -> None:
 
     # Metadata
     assert reader.metadata is not None
-    assert reader.metadata.title == "CetakKira"
-    assert reader.metadata.author == "CetakKira"
+    assert reader.metadata.title == "CetakPintar"
+    assert reader.metadata.author == "CetakPintar"
 
     # A4 geometry: width ~595.28, height ~841.89
     for page in reader.pages:
@@ -155,14 +155,14 @@ def test_grid_rendering_and_answers(lang: str) -> None:
             assert "SKEMA JAWAPAN" in answer_text
             assert "[SKEMA JAWAPAN]" not in answer_text
             assert "Untuk guru / ibu bapa" in answer_text
-            assert "CetakKira" in content_text
+            assert "CetakPintar" in content_text
             assert "Halaman 1 / 2" in content_text
         else:
             assert "100-NUMBER GRID" in content_text
             assert "ANSWER KEY" in answer_text
             assert "[ANSWER KEY]" not in answer_text
             assert "For teachers and parents" in answer_text
-            assert "CetakKira" in content_text
+            assert "CetakPintar" in content_text
             assert "Page 1 of 2" in content_text
 
         # 901 grid includes 1000
@@ -333,8 +333,8 @@ def test_sifir_ref_rendering_sheet_counts(
 
     # Metadata and A4 checks
     assert reader.metadata is not None
-    assert reader.metadata.title == "CetakKira"
-    assert reader.metadata.author == "CetakKira"
+    assert reader.metadata.title == "CetakPintar"
+    assert reader.metadata.author == "CetakPintar"
 
     # Verify extracted text
     page1_text = reader.pages[0].extract_text()
@@ -477,8 +477,8 @@ def division_fixture_pdf(lang):
                                         division_steps(dividend, divisor)))
     buffer = io.BytesIO()
     canvas = Canvas(buffer, pagesize=A4, invariant=1)
-    canvas.setTitle("CetakKira")
-    canvas.setAuthor("CetakKira")
+    canvas.setTitle("CetakPintar")
+    canvas.setAuthor("CetakPintar")
     spec = Spec(t=("div",), pages=1, seed=0, lang=lang, div_digits=3)
     draw_div_answers(canvas, spec, problems, 1, 1)
     canvas.showPage()

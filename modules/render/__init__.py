@@ -1,1 +1,1 @@
-"""PDF rendering modules for CetakKira."""
+"""PDF rendering modules for CetakPintar."""

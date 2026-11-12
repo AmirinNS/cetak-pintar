@@ -5,7 +5,7 @@ import io
 import pytest
 from pypdf import PdfReader
 
-from cetak_kira import limiter
+from cetak_pintar import limiter
 from modules.layout import cards_per_sheet, plan_sheets, sifir_ref_sheets
 from modules.spec import Spec, parse_spec
 

@@ -18,7 +18,7 @@ ENV APP_ENV=production \
     PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
-COPY cetak_kira.py cli.py ./
+COPY cetak_pintar.py cli.py ./
 COPY modules/ modules/
 COPY sources/ sources/
 COPY static/ static/
@@ -29,4 +29,4 @@ COPY templates/ templates/
 # runtime: docker run -e SECRET_KEY=... (never a value baked into the image).
 USER 1000:1000
 EXPOSE 5000
-CMD ["python", "cetak_kira.py"]
+CMD ["python", "cetak_pintar.py"]

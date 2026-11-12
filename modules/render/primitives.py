@@ -1,4 +1,4 @@
-"""Drawing primitives for CetakKira worksheets."""
+"""Drawing primitives for CetakPintar worksheets."""
 
 from __future__ import annotations
 

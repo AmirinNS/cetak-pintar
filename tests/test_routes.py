@@ -1,4 +1,4 @@
-"""Tests for CetakKira Flask web routes, templates, rate limiter, and PDF determinism."""
+"""Tests for CetakPintar Flask web routes, templates, rate limiter, and PDF determinism."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from flask.testing import FlaskClient
 
 import cli
-from cetak_kira import limiter
+from cetak_pintar import limiter
 from modules.render.pdf import render
 from modules.spec import parse_spec
 
@@ -52,7 +52,7 @@ def test_index_prefills_preset_and_query(client: FlaskClient) -> None:
     assert resp_en.status_code == 200
     html_en = resp_en.data.decode("utf-8")
     assert '<html lang="en">' in html_en
-    assert "Generate Printable A4 Math Worksheets" in html_en
+    assert "Generate Printable A4 Math and Alphabet Worksheets" in html_en
 
     # Explicit query prefill
     resp_custom = client.get("/?t=div&div_digits=3&div_rem=1&seed=98765&pages=2")
@@ -95,7 +95,7 @@ def test_valid_spec_pdf_and_cli_determinism(client: FlaskClient) -> None:
     response = client.get(f"/cetak?{query}")
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/pdf"
-    assert response.headers["Content-Disposition"] == 'inline; filename="cetakkira-add-42.pdf"'
+    assert response.headers["Content-Disposition"] == 'inline; filename="cetakpintar-add-42.pdf"'
     web_bytes = response.data
 
     # Modules direct render

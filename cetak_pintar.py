@@ -95,7 +95,7 @@ def cetak():
 
     pdf_bytes = render(spec)
     topics_part = "_".join(spec.t)
-    filename = f"cetakkira-{topics_part}-{spec.seed}.pdf"
+    filename = f"cetakpintar-{topics_part}-{spec.seed}.pdf"
     headers = {
         "Content-Disposition": f'inline; filename="{filename}"',
         "Content-Type": "application/pdf",

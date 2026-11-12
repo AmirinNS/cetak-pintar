@@ -1,7 +1,7 @@
 [project]
-name = "cetak_kira"
+name = "cetak_pintar"
 version = "0.1.0"
-description = "Printable A4 math worksheets for Malaysian primary school kids, with answer keys. Web app and CLI."
+description = "Printable A4 math and alphabet worksheets for Malaysian primary school kids, with answer keys. Web app and CLI."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

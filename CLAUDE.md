@@ -1,10 +1,10 @@
-# CLAUDE.md — CetakKira
+# CLAUDE.md — CetakPintar
 
-Printable A4 math worksheets for Malaysian primary school kids, with answer keys. Web app and CLI.
+Printable A4 math and alphabet worksheets for Malaysian primary school kids, with answer keys. Web app and CLI.
 
 ## Stack
 
-- **Backend:** Flask (`cetak_kira.py` entrypoint, thin routes)
+- **Backend:** Flask (`cetak_pintar.py` entrypoint, thin routes)
 - **Database:** none. Worksheet settings live in the URL and PDFs are generated per request, never stored.
 - **Frontend:** Jinja2 templates + Bootstrap 5 (CDN) + vanilla JS
 
@@ -42,9 +42,9 @@ Never use system python/pip or bare virtualenvs. Always use `uv`:
 The native Flask server is dev/testing only; production is served by waitress (`sources/config.py` sets `IS_PRODUCTION`/`DEBUG`, the entrypoint picks the server). There is nothing else to configure per environment beyond `.env`; the app keeps no database and stores no worksheets.
 
     # development
-    uv run python cetak_kira.py
+    uv run python cetak_pintar.py
     # production (waitress)
-    APP_ENV=production uv run python cetak_kira.py
+    APP_ENV=production uv run python cetak_pintar.py
     # http://localhost:5000
 
 ## Plans

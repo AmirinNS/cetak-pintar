@@ -1,16 +1,16 @@
-# CetakKira
+# CetakPintar
 
-Jana lembaran kerja matematik A4 yang sedia dicetak untuk murid sekolah rendah (diinspirasikan oleh topik Tahun 1 hingga 3), lengkap dengan skema jawapan. Tersedia sebagai aplikasi web yang mudah dikongsi dan antara muka baris perintah (CLI).
+Jana lembaran kerja matematik dan abjad A4 yang sedia dicetak untuk murid prasekolah dan sekolah rendah, lengkap dengan skema jawapan. Lembaran abjad dan bertema gambar akan ditambah dalam keluaran akan datang. Tersedia sebagai aplikasi web yang mudah dikongsi dan antara muka baris perintah (CLI).
 
-[English version below](#cetakkira-english)
+[English version below](#cetakpintar-english)
 
 ---
 
 ## Bahasa Melayu
 
-### Apa Itu CetakKira?
+### Apa Itu CetakPintar?
 
-CetakKira ialah alat sumber terbuka percuma untuk menghasilkan lembaran kerja latihan matematik dalam format PDF bersaiz A4. Setiap helaian dijana secara dinamik dan disertakan skema jawapan lengkap di bahagian belakang, memudahkan ibu bapa serta guru membuat semakan pantas.
+CetakPintar ialah alat sumber terbuka percuma untuk menghasilkan lembaran kerja latihan matematik dan abjad dalam format PDF bersaiz A4. Setiap helaian dijana secara dinamik dan disertakan skema jawapan lengkap di bahagian belakang, memudahkan ibu bapa serta guru membuat semakan pantas.
 
 Ciri-ciri utama:
 * **Penjanaan dinamik tanpa pangkalan data:** Semua konfigurasi disimpan dalam URL. Tiada akaun pengguna atau storan fail diperlukan.
@@ -27,7 +27,7 @@ Ciri-ciri utama:
 
 Borang interaktif membolehkan anda memilih topik, bilangan halaman, bahasa, dan pratetap dengan pantas:
 
-![Antara Muka Web CetakKira](static/img/screenshot-form.png)
+![Antara Muka Web CetakPintar](static/img/screenshot-form.png)
 
 #### Contoh Lembaran Latihan dan Skema Jawapan
 
@@ -55,7 +55,7 @@ uv sync
 cp .env.example .env
 
 # Jalankan pelayan pembangunan
-uv run python cetak_kira.py
+uv run python cetak_pintar.py
 ```
 
 Buka pelayar web anda di `http://localhost:5000`.
@@ -63,7 +63,7 @@ Buka pelayar web anda di `http://localhost:5000`.
 Untuk menjalankan dalam mod pengeluaran (production) menggunakan Waitress:
 
 ```bash
-APP_ENV=production SECRET_KEY="kunci-rahsia-anda" uv run python cetak_kira.py
+APP_ENV=production SECRET_KEY="kunci-rahsia-anda" uv run python cetak_pintar.py
 ```
 
 #### 2. Menjana PDF melalui Baris Perintah (CLI)
@@ -86,14 +86,14 @@ uv run python cli.py --topics count --count-max 10 --pages 2 -o kira-objek.pdf
 
 #### 3. Menggunakan Docker
 
-CetakKira menyediakan imej Docker ringan yang dikuasakan oleh pelayan Waitress:
+CetakPintar menyediakan imej Docker ringan yang dikuasakan oleh pelayan Waitress:
 
 ```bash
 # Bina imej Docker
-docker build -t cetak-kira .
+docker build -t cetak-pintar .
 
 # Jalankan kontena (wajib membekalkan SECRET_KEY untuk mod pengeluaran)
-docker run -d -p 5000:5000 -e SECRET_KEY="kunci-rahsia-pengeluaran-anda" --name cetak-kira-app cetak-kira
+docker run -d -p 5000:5000 -e SECRET_KEY="kunci-rahsia-pengeluaran-anda" --name cetak-pintar-app cetak-pintar
 ```
 
 Aplikasi sedia diakses di `http://localhost:5000`.
@@ -102,7 +102,7 @@ Aplikasi sedia diakses di `http://localhost:5000`.
 
 ### Jenis Lembaran Kerja
 
-CetakKira menawarkan tujuh jenis komponen latihan matematik:
+CetakPintar menawarkan tujuh jenis komponen latihan matematik:
 
 | Kod Topik | Nama Topik | Penerangan dan Julat Pilihan |
 |---|---|---|
@@ -136,17 +136,18 @@ Untuk memudahkan pemilihan, tiga pratetap disediakan berasaskan julat sebenar to
 
 ### Nota Ketetapan (Determinism)
 
-CetakKira direka dengan prinsip deterministik:
+CetakPintar direka dengan prinsip deterministik:
 * Setiap lembaran kerja dijana daripada nilai benih (`seed`) rawak berangka (antara 0 hingga 2147483647).
 * Parameter yang sama berserta nilai benih yang sama akan sentiasa menghasilkan fail PDF yang sama bait demi bait dalam keluaran perisian yang sama di bawah Python 3.12 dengan `uv.lock` yang ditetapkan.
 * Ini membolehkan guru dan ibu bapa berkongsi pautan URL kepada orang lain dan penerima dijamin mendapat set latihan dan susunan soalan yang tepat sama.
+* Pautan lama yang dikongsi sebelum penjenamaan semula masih berfungsi. Kandungan lembaran kerja yang dijana kekal sama, hanya penjenama laman dan metadata PDF bertukar kepada CetakPintar.
 * Perhatian: Keluaran perisian baharu pada masa hadapan mungkin menambah baik algoritma penjanaan soalan atau susun atur ReportLab, jadi ketetapan dijamin dalam versi keluaran yang sama.
 
 ---
 
 ### Penafian Produk Kurikulum
 
-CetakKira ialah inisiatif sumber terbuka bebas yang dibina untuk membantu ibu bapa, guru, dan tutor menyediakan lembaran latihan matematik secara pantas dan jimat kos.
+CetakPintar ialah inisiatif sumber terbuka bebas yang dibina untuk membantu ibu bapa, guru, dan tutor menyediakan lembaran latihan matematik secara pantas dan jimat kos.
 
 Walaupun topik dan pratetap diilhamkan daripada topik Tahun 1 hingga 3 sekolah rendah di Malaysia:
 * Projek ini **bukan** produk rasmi Kementerian Pendidikan Malaysia (KPM).
@@ -172,15 +173,15 @@ Dilesenkan di bawah [Lesen MIT](LICENSE). Hak Cipta (c) 2026 Mohamad Khairulamir
 
 ## English
 
-# CetakKira (English)
+# CetakPintar (English)
 
-Generate print-ready A4 math worksheets for primary school children (inspired by Tahun 1 to 3 topics), complete with full answer keys. Available as a shareable web application and a command-line interface (CLI).
+Generate print-ready A4 math and alphabet worksheets for preschool and primary school children, complete with answer keys. Alphabet and picture-theme sheets are on the roadmap. Available as a shareable web application and a command-line interface (CLI).
 
 ---
 
-### What is CetakKira?
+### What is CetakPintar?
 
-CetakKira is a free, open-source tool for generating clean, printable math worksheet PDFs in standard A4 format. Every worksheet is dynamically created at runtime from a random seed and includes an answer key, making practice sessions and grading effortless for parents, teachers, and tutors.
+CetakPintar is a free, open-source tool for generating clean, printable math and alphabet worksheet PDFs in standard A4 format. Every worksheet is dynamically created at runtime from a random seed and includes an answer key, making practice sessions and grading effortless for parents, teachers, and tutors.
 
 Key features:
 * **Stateless and database-free:** All worksheet options are encoded in the URL query parameters. No user accounts, database servers, or stored files are required.
@@ -197,7 +198,7 @@ Key features:
 
 The clean web form allows parents and educators to customize topics, page budgets, languages, and presets with ease:
 
-![CetakKira Web Form Screenshot](static/img/screenshot-form.png)
+![CetakPintar Web Form Screenshot](static/img/screenshot-form.png)
 
 #### Sample Practice and Answer Sheets
 
@@ -225,7 +226,7 @@ uv sync
 cp .env.example .env
 
 # Run the development server
-uv run python cetak_kira.py
+uv run python cetak_pintar.py
 ```
 
 Visit `http://localhost:5000` in your browser.
@@ -233,7 +234,7 @@ Visit `http://localhost:5000` in your browser.
 To start the production server powered by Waitress:
 
 ```bash
-APP_ENV=production SECRET_KEY="your-production-secret-key" uv run python cetak_kira.py
+APP_ENV=production SECRET_KEY="your-production-secret-key" uv run python cetak_pintar.py
 ```
 
 #### 2. Generating PDFs with the Command-Line Interface (CLI)
@@ -256,14 +257,14 @@ uv run python cli.py --topics count --count-max 10 --pages 2 -o counting-practic
 
 #### 3. Running with Docker
 
-CetakKira provides a lean multi-stage Docker container served by Waitress:
+CetakPintar provides a lean multi-stage Docker container served by Waitress:
 
 ```bash
 # Build the container image
-docker build -t cetak-kira .
+docker build -t cetak-pintar .
 
 # Run the container (SECRET_KEY is mandatory for production mode)
-docker run -d -p 5000:5000 -e SECRET_KEY="your-production-secret-key" --name cetak-kira-app cetak-kira
+docker run -d -p 5000:5000 -e SECRET_KEY="your-production-secret-key" --name cetak-pintar-app cetak-pintar
 ```
 
 Access the application at `http://localhost:5000`.
@@ -272,7 +273,7 @@ Access the application at `http://localhost:5000`.
 
 ### Worksheet Types Table
 
-CetakKira supports seven modular worksheet topics:
+CetakPintar supports seven modular worksheet topics:
 
 | Topic Code | Topic Name | Description and Configurable Ranges |
 |---|---|---|
@@ -306,17 +307,18 @@ For convenient selection, three standard presets are provided, described by thei
 
 ### Determinism Note
 
-CetakKira guarantees deterministic document generation:
+CetakPintar guarantees deterministic document generation:
 * Every worksheet is generated from a numeric random seed (ranging from 0 to 2147483647).
 * The identical normalized parameters and seed produce the exact same byte-identical PDF output within the same software release on Python 3.12 with the locked dependencies in `uv.lock`.
 * When a teacher or parent shares a worksheet URL, anyone opening that URL will obtain the exact same exercises and layout.
+* Worksheet links shared before the rebrand still work. The content they produce is unchanged, and only the site branding and PDF metadata move to CetakPintar.
 * Note: Future software releases may adjust question distribution algorithms or ReportLab layout metrics, so cross-release reproducibility of old links is not guaranteed.
 
 ---
 
 ### Curriculum Disclaimer
 
-CetakKira is an independent, community-driven open-source project intended to support families, teachers, and tutors with accessible, printable practice materials.
+CetakPintar is an independent, community-driven open-source project intended to support families, teachers, and tutors with accessible, printable practice materials.
 
 While the exercises and presets are inspired by primary school curriculum topics in Malaysia (Tahun 1 to 3):
 * This project is **not** an official product of the Ministry of Education Malaysia (Kementerian Pendidikan Malaysia / KPM).

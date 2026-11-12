@@ -8,7 +8,7 @@ from waitress.adjustments import Adjustments
 from waitress.proxy_headers import proxy_headers_middleware
 from werkzeug.test import Client
 
-from cetak_kira import limiter
+from cetak_pintar import limiter
 from sources import config
 
 
@@ -23,7 +23,7 @@ def test_production_proxy_stack_client_addresses_and_rate_buckets(monkeypatch, h
     monkeypatch.setattr(config, "IS_PRODUCTION", True)
     monkeypatch.setattr(config, "TRUSTED_PROXY_HOPS", hops)
     monkeypatch.setattr(config, "RATELIMIT_ENABLED", True)
-    namespace = runpy.run_module("cetak_kira", run_name="__main__")
+    namespace = runpy.run_module("cetak_pintar", run_name="__main__")
     app = captured["app"]
     app.add_url_rule(
         "/client-address",
@@ -67,7 +67,7 @@ def test_production_proxy_stack_client_addresses_and_rate_buckets(monkeypatch, h
 @pytest.mark.parametrize("seeds", [("", "42"), ("42", ""), (" \t ", "42")])
 def test_repeated_blank_seed_rejected_before_resolution(client, seeds, monkeypatch):
     resolutions = []
-    monkeypatch.setattr("cetak_kira.resolve_seed", lambda raw: resolutions.append(raw) or 7)
+    monkeypatch.setattr("cetak_pintar.resolve_seed", lambda raw: resolutions.append(raw) or 7)
     limiter.reset()
     response = client.get("/cetak", query_string=[("t", "add"), *(("seed", s) for s in seeds)])
     assert response.status_code == 400

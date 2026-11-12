@@ -38,5 +38,5 @@ RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "true").strip().lower() 
 }
 
 # Site identity — used for SEO meta tags, canonical URLs, robots/sitemap.
-SITE_NAME = os.environ.get("SITE_NAME", "CetakKira")
+SITE_NAME = os.environ.get("SITE_NAME", "CetakPintar")
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:5000").rstrip("/")

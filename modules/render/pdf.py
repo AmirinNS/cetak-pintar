@@ -1,4 +1,4 @@
-"""PDF generation entrypoint for CetakKira worksheets."""
+"""PDF generation entrypoint for CetakPintar worksheets."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def render(spec: Spec) -> bytes:
     """Render a worksheet Spec to PDF bytes.
 
     Uses A4 paper size, ReportLab invariant mode for byte-identical determinism,
-    Helvetica font family, and sets PDF metadata Title and Author to 'CetakKira'.
+    Helvetica font family, and sets PDF metadata Title and Author to 'CetakPintar'.
 
     Raises NotImplementedError naming the topic if the spec contains topics
     outside Phase D (grid, add, sub, sifir_ref, sifir, div).
@@ -98,8 +98,8 @@ def render(spec: Spec) -> bytes:
 
     buf = io.BytesIO()
     c = Canvas(buf, pagesize=A4, invariant=1)
-    c.setTitle("CetakKira")
-    c.setAuthor("CetakKira")
+    c.setTitle("CetakPintar")
+    c.setAuthor("CetakPintar")
 
     for page_idx, (kind, topic, sheet_idx) in enumerate(sheets, start=1):
         is_answer = kind == "answer"

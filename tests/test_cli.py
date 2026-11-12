@@ -1,4 +1,4 @@
-"""Tests for the CetakKira command-line interface (Milestone B2)."""
+"""Tests for the CetakPintar command-line interface (Milestone B2)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
-from cetak_kira import limiter
+from cetak_pintar import limiter
 from cli import main
 from modules.render.pdf import render
 from modules.spec import parse_spec

@@ -9,7 +9,7 @@ from sources.config import SITE_NAME, SITE_URL
 # Site-wide defaults. Override per page via the render_template() context
 # or the {% block %}s in base.html.
 META_DESCRIPTION = (
-    "Printable A4 math worksheets for Malaysian primary school kids, "
+    "Printable A4 math and alphabet worksheets for Malaysian primary school kids, "
     "with answer keys. Web app and CLI."
 )
 META_IMAGE = SITE_URL + "/static/img/og-default.png"

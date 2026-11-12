@@ -1,4 +1,4 @@
-// CetakKira — Progressive enhancement form behavior
+// CetakPintar — Progressive enhancement form behavior
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("worksheet-form");
     if (!form) return;

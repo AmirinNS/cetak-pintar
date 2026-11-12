@@ -1,10 +1,10 @@
-"""Test fixtures for cetak-kira."""
+"""Test fixtures for cetak-pintar."""
 
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from cetak_kira import app as flask_app
+from cetak_pintar import app as flask_app
 
 
 @pytest.fixture

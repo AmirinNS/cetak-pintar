@@ -1,4 +1,4 @@
-"""Form context preparation and parameter normalization for CetakKira web UI."""
+"""Form context preparation and parameter normalization for CetakPintar web UI."""
 
 from __future__ import annotations
 

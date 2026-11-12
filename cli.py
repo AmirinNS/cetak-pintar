@@ -1,4 +1,4 @@
-"""Command-line interface for generating CetakKira worksheet PDFs."""
+"""Command-line interface for generating CetakPintar worksheet PDFs."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Internationalization (i18n) dictionary and helpers for CetakKira.
+"""Internationalization (i18n) dictionary and helpers for CetakPintar.
 
 Supports Malay ('ms') and English ('en') with functional translation helpers.
 """
@@ -10,14 +10,15 @@ from typing import Any
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "ms": {
         # App identity
-        "app_name": "CetakKira",
-        "brand_footer": "CetakKira",
-        "app_tagline": "Lembaran Kerja Matematik Rendah Boleh Cetak",
+        "app_name": "CetakPintar",
+        "brand_footer": "CetakPintar",
+        "app_tagline": "Lembaran Kerja Matematik dan Abjad Boleh Cetak",
         # Hero & Intro
-        "hero_title": "Jana Lembaran Kerja Matematik A4 Boleh Cetak",
+        "hero_title": "Jana Lembaran Kerja Matematik dan Abjad A4 Boleh Cetak",
         "hero_subtitle": (
-            "Percuma, mudah, dan sedia dicetak untuk murid Tahun 1 hingga 3. "
-            "Latihan dijana segar setiap kali bersama skema jawapan lengkap."
+            "Percuma, mudah, dan sedia dicetak untuk latihan matematik dan abjad murid "
+            "prasekolah dan sekolah rendah. Lembaran dijana segar setiap kali bersama "
+            "skema jawapan lengkap."
         ),
         "presets_label": "Pilihan Pantas (Pratetap):",
         "preset_t1_badge": "Tahun 1",
@@ -34,7 +35,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "answer_key_instruction": "Semak jawapan anda dengan teliti.",
         "label_answer_target": "Untuk guru / ibu bapa",
         # Alt text for illustrations
-        "alt_mascot": "Maskot CetakKira, kancil pintar memegang pensel dan lembaran kerja",
+        "alt_mascot": "Maskot CetakPintar, kancil pintar memegang pensel dan lembaran kerja",
         "alt_topic_grid": "Ikon carta nombor 100",
         "alt_topic_count": "Ikon kira dan tulis objek",
         "alt_topic_add": "Ikon operasi tambah bentuk lazim",
@@ -215,14 +216,14 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "en": {
         # App identity
-        "app_name": "CetakKira",
-        "brand_footer": "CetakKira",
-        "app_tagline": "Printable Primary Math Worksheets",
+        "app_name": "CetakPintar",
+        "brand_footer": "CetakPintar",
+        "app_tagline": "Printable Math and Alphabet Worksheets",
         # Hero & Intro
-        "hero_title": "Generate Printable A4 Math Worksheets",
+        "hero_title": "Generate Printable A4 Math and Alphabet Worksheets",
         "hero_subtitle": (
-            "Free, calm, and ready to print for Year 1 to 3 primary pupils. "
-            "Generates fresh problems every time with matching answer keys."
+            "Free, calm, and ready to print for preschool and primary pupils. "
+            "Generates fresh math and alphabet practice every time with matching answer keys."
         ),
         "presets_label": "Quick Presets:",
         "preset_t1_badge": "Year 1",
@@ -239,7 +240,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "answer_key_instruction": "Check your answers carefully.",
         "label_answer_target": "For teachers and parents",
         # Alt text for illustrations
-        "alt_mascot": "CetakKira mascot, a friendly mouse-deer holding a pencil and worksheet",
+        "alt_mascot": "CetakPintar mascot, a friendly mouse-deer holding a pencil and worksheet",
         "alt_topic_grid": "100-number grid icon",
         "alt_topic_count": "Count and write objects icon",
         "alt_topic_add": "Vertical addition icon",

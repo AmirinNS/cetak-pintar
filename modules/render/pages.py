@@ -1,4 +1,4 @@
-"""Page renderers for CetakKira worksheet topics."""
+"""Page renderers for CetakPintar worksheet topics."""
 
 from __future__ import annotations
 
