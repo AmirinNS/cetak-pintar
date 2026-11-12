@@ -29,6 +29,11 @@
                    title="{{ t('preset_t3_desc', lang=lang) }}">
                     <i class="bi bi-trophy-fill me-1" aria-hidden="true"></i>{{ t('preset_t3_badge', lang=lang) }}
                 </a>
+                <a href="/?preset=abc{% if lang != 'ms' %}&lang={{ lang }}{% endif %}"
+                   class="btn btn-sm {% if preset == 'abc' %}btn-primary active fw-bold{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-2 text-nowrap"
+                   title="{{ t('preset_abc_desc', lang=lang) }}">
+                    <i class="bi bi-fonts me-1" aria-hidden="true"></i>{{ t('preset_abc_badge', lang=lang) }}
+                </a>
             </div>
         </div>
         <div class="col-md-4 text-center">
@@ -62,13 +67,11 @@
     <input type="hidden" name="lang" id="input-lang" value="{{ lang }}">
 
     <!-- 1. Topic Selection -->
-    <fieldset class="card border shadow-sm rounded-4 p-3 p-md-4 mb-4 bg-body" id="field-t">
-        <legend class="h5 fw-bold mb-1 float-none w-auto">
-            {{ t('section_topics', lang=lang) }}
-        </legend>
-        <p class="text-body-secondary small mb-3">
-            {{ t('section_topics_hint', lang=lang) }}
-        </p>
+    <div id="field-t" class="mb-4">
+        <div class="px-1 mb-3">
+            <h2 class="h5 fw-bold mb-1">{{ t('section_topics', lang=lang) }}</h2>
+            <p class="text-body-secondary small mb-0">{{ t('section_topics_hint', lang=lang) }}</p>
+        </div>
 
         {% if 't' in field_errors %}
         <div id="error-t" class="alert alert-danger py-2 small mb-3 rounded-3" role="alert">
@@ -77,36 +80,43 @@
         </div>
         {% endif %}
 
-        <div class="row g-3">
-            {% for topic in VALID_TOPICS %}
-            <div class="col-12 col-md-6 col-lg-4">
-                <label for="topic-check-{{ topic }}"
-                       class="topic-select-card card h-100 p-3 border rounded-3 d-flex flex-row align-items-center gap-3 {% if topic in selected_topics %}border-primary bg-primary-subtle text-primary-emphasis active{% endif %}">
-                    <div class="form-check m-0">
-                        <input class="form-check-input topic-checkbox fs-5"
-                               type="checkbox"
-                               name="t"
-                               value="{{ topic }}"
-                               id="topic-check-{{ topic }}"
-                               data-topic="{{ topic }}"
-                               {% if topic in selected_topics %}checked{% endif %}
-                               {% if 't' in field_errors %}aria-invalid="true" aria-describedby="error-t"{% endif %}>
-                    </div>
-                    <div class="topic-icon-box flex-shrink-0 rounded-2 overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary text-secondary">
-                        <img src="{{ url_for('static', filename='img/topic-' ~ topic ~ '.webp') }}"
-                             alt="{{ t('alt_topic_' ~ topic, lang=lang) }}"
-                             width="48" height="48"
-                             class="topic-icon-img w-100 h-100 object-fit-contain"
-                             loading="lazy">
-                    </div>
-                    <div class="flex-grow-1 min-w-0">
-                        <div class="fw-bold fs-6 text-truncate">{{ t('topic_' ~ topic ~ '_name', lang=lang) }}</div>
-                    </div>
-                </label>
+        {% for section_key, topic_list in [('section_math', MATH_TOPICS), ('section_abc', ABC_TOPICS)] %}
+        <fieldset class="card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 float-none w-auto text-primary">
+                {{ t(section_key, lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                {% for topic in topic_list %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label for="topic-check-{{ topic }}"
+                           class="topic-select-card card h-100 p-3 border rounded-3 d-flex flex-row align-items-center gap-3 {% if topic in selected_topics %}border-primary bg-primary-subtle text-primary-emphasis active{% endif %}">
+                        <div class="form-check m-0">
+                            <input class="form-check-input topic-checkbox fs-5"
+                                   type="checkbox"
+                                   name="t"
+                                   value="{{ topic }}"
+                                   id="topic-check-{{ topic }}"
+                                   data-topic="{{ topic }}"
+                                   {% if topic in selected_topics %}checked{% endif %}
+                                   {% if 't' in field_errors %}aria-invalid="true" aria-describedby="error-t"{% endif %}>
+                        </div>
+                        <div class="topic-icon-box flex-shrink-0 rounded-2 overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                            <img src="{{ url_for('static', filename='img/topic-' ~ topic ~ '.webp') }}"
+                                 alt="{{ t('alt_topic_' ~ topic, lang=lang) }}"
+                                 width="48" height="48"
+                                 class="topic-icon-img w-100 h-100 object-fit-contain"
+                                 loading="lazy">
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-bold fs-6 text-truncate">{{ t('topic_' ~ topic ~ '_name', lang=lang) }}</div>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-    </fieldset>
+        </fieldset>
+        {% endfor %}
+    </div>
 
     <!-- 2. Topic Options & Difficulty -->
     <section class="mb-4">
@@ -480,6 +490,75 @@
                         <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['div_rem'] }}
                     </div>
                     {% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: ABC Case -->
+        <fieldset id="group-topic-abc_case"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-trace.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('section_abc', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-abc_case">
+                    <label for="input-abc-case" class="form-label fw-semibold">
+                        {{ t('label_abc_case', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'abc_case' in field_errors %}is-invalid{% endif %}"
+                            id="input-abc-case"
+                            name="abc_case"
+                            {% if 'abc_case' in field_errors %}aria-invalid="true" aria-describedby="error-abc_case"{% endif %}>
+                        <option value="upper" {% if abc_case_val == 'upper' %}selected{% endif %}>
+                            {{ t('opt_abc_case_upper', lang=lang) }}
+                        </option>
+                        <option value="lower" {% if abc_case_val == 'lower' %}selected{% endif %}>
+                            {{ t('opt_abc_case_lower', lang=lang) }}
+                        </option>
+                    </select>
+                    {% if 'abc_case' in field_errors %}
+                    <div id="error-abc_case" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['abc_case'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_abc_case', lang=lang) }}</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Topic Options: Missing Letters -->
+        <fieldset id="group-topic-missing"
+                  class="topic-group-fieldset card border shadow-sm rounded-4 p-3 p-md-4 mb-3 bg-body">
+            <legend class="h6 fw-bold mb-3 d-flex align-items-center gap-2 float-none w-auto text-primary">
+                <div class="topic-legend-icon-box flex-shrink-0 rounded-1 overflow-hidden d-inline-flex align-items-center justify-content-center bg-body-secondary text-secondary">
+                    <img src="{{ url_for('static', filename='img/topic-missing.webp') }}" alt="" width="32" height="32" class="w-100 h-100 object-fit-contain">
+                </div>
+                {{ t('topic_missing_name', lang=lang) }}
+            </legend>
+            <div class="row g-3">
+                <div class="col-md-6" id="field-missing_blanks">
+                    <label for="input-missing-blanks" class="form-label fw-semibold">
+                        {{ t('label_missing_blanks', lang=lang) }}
+                    </label>
+                    <select class="form-select form-control-touch {% if 'missing_blanks' in field_errors %}is-invalid{% endif %}"
+                            id="input-missing-blanks"
+                            name="missing_blanks"
+                            {% if 'missing_blanks' in field_errors %}aria-invalid="true" aria-describedby="error-missing_blanks"{% endif %}>
+                        {% for n in VALID_MISSING_BLANKS %}
+                        <option value="{{ n }}" {% if missing_blanks_val == n|string %}selected{% endif %}>
+                            {{ t('opt_missing_blanks_' ~ n, lang=lang) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if 'missing_blanks' in field_errors %}
+                    <div id="error-missing_blanks" class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle-fill me-1" aria-hidden="true"></i>{{ field_errors['missing_blanks'] }}
+                    </div>
+                    {% endif %}
+                    <div class="form-text small">{{ t('hint_missing_blanks', lang=lang) }}</div>
                 </div>
             </div>
         </fieldset>

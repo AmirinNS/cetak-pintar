@@ -450,3 +450,122 @@ def test_count_validation():
     assert rt_err == []
     assert rt_spec == spec_full
 
+
+def test_alphabet_topics_in_canonical_order():
+    spec, errors = parse_spec({
+        "t": "match,missing,trace,div,sifir,add,count,grid,sub,sifir_ref,trace",
+        "pages": 10,
+    })
+    assert errors == []
+    assert spec.t == (
+        "grid", "count", "add", "sub", "sifir_ref", "sifir", "div",
+        "trace", "missing", "match",
+    )
+
+
+def test_abc_preset_expansion_and_overrides():
+    assert expand_preset("abc") == {
+        "t": ("trace", "missing", "match"),
+        "abc_case": "upper",
+        "missing_blanks": 1,
+    }
+    spec, errors = parse_spec({"preset": "abc"})
+    assert errors == []
+    assert spec.t == ("trace", "missing", "match")
+    assert spec.abc_case == "upper"
+    assert spec.missing_blanks == 1
+
+    spec, errors = parse_spec({
+        "preset": "abc", "t": "missing", "abc_case": "lower", "missing_blanks": 3,
+    })
+    assert errors == []
+    assert spec.t == ("missing",)
+    assert spec.abc_case == "lower"
+    assert spec.missing_blanks == 3
+
+
+@pytest.mark.parametrize("topics", ["trace", "missing", "trace,missing"])
+@pytest.mark.parametrize("case", ["upper", "lower"])
+def test_abc_case_valid(topics, case):
+    spec, errors = parse_spec({"t": topics, "abc_case": case})
+    assert errors == []
+    assert spec.abc_case == case
+
+
+@pytest.mark.parametrize("case", ["", "UPPER", "mixed"])
+def test_abc_case_invalid(case):
+    spec, errors = parse_spec({"t": "trace", "abc_case": case})
+    assert spec is None
+    assert errors == [("abc_case", "invalid_choice")]
+
+
+@pytest.mark.parametrize("blanks", [1, 2, 3])
+def test_missing_blanks_valid(blanks):
+    spec, errors = parse_spec({"t": "missing", "missing_blanks": blanks})
+    assert errors == []
+    assert spec.missing_blanks == blanks
+
+
+@pytest.mark.parametrize("value, message", [
+    (0, "out_of_range"), (4, "out_of_range"), (-1, "out_of_range"),
+    ("", "invalid_integer"), ("two", "invalid_integer"), ("1.5", "invalid_integer"),
+])
+def test_missing_blanks_invalid(value, message):
+    spec, errors = parse_spec({"t": "missing", "missing_blanks": value})
+    assert spec is None
+    assert errors == [("missing_blanks", message)]
+
+
+@pytest.mark.parametrize("topics", ["missing", "add"])
+@pytest.mark.parametrize("field, values", [
+    ("abc_case", ["upper", "lower"]), ("missing_blanks", ["1", "2"]),
+])
+def test_alphabet_repeated_scalars(topics, field, values):
+    spec, errors = parse_spec({"t": topics, field: values})
+    assert spec is None
+    assert errors == [(field, "repeated")]
+
+
+@pytest.mark.parametrize("topics", [("add",), ("match",), ("trace",), ("missing",)])
+def test_alphabet_inactive_options_reset_and_drop(topics):
+    spec = Spec(t=topics, abc_case="lower", missing_blanks=3)
+    uses_case = "trace" in topics or "missing" in topics
+    assert spec.abc_case == ("lower" if uses_case else "upper")
+    assert spec.missing_blanks == (3 if "missing" in topics else 1)
+    query = spec_to_query(spec)
+    assert ("abc_case=" in query) == uses_case
+    assert ("missing_blanks=" in query) == ("missing" in topics)
+    assert parse_spec(query) == (spec, [])
+
+
+def test_inactive_alphabet_invalid_values_ignored():
+    spec, errors = parse_spec({
+        "t": "match", "abc_case": "mixed", "missing_blanks": "many",
+    })
+    assert errors == []
+    assert spec.abc_case == "upper"
+    assert spec.missing_blanks == 1
+    spec, errors = parse_spec({"t": "trace", "missing_blanks": "many"})
+    assert errors == []
+    assert spec.missing_blanks == 1
+
+
+@pytest.mark.parametrize("case", ["upper", "lower"])
+@pytest.mark.parametrize("blanks", [1, 2, 3])
+def test_alphabet_round_trip(case, blanks):
+    spec = Spec(
+        t=("add", "trace", "missing", "match"), pages=7, lang="en", ans=0,
+        seed=42, add_digits=2, abc_case=case, missing_blanks=blanks,
+    )
+    assert parse_spec(spec_to_query(spec)) == (spec, [])
+
+
+def test_existing_math_query_unchanged():
+    spec, errors = parse_spec("preset=t1&seed=42")
+    assert errors == []
+    assert spec_to_query(spec) == (
+        "t=grid,count,add,sub&pages=4&lang=ms&ans=1&seed=42"
+        "&grid_start=1&grid_blanks=30&count_max=10"
+        "&count_shapes=star,circle,apple,fish,flower"
+        "&add_digits=1&add_regroup=0&sub_digits=1&sub_borrow=0"
+    )

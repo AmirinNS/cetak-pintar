@@ -272,3 +272,36 @@ def test_module_entrypoint_exit_code(tmp_path) -> None:
 
     assert proc.returncode == 2
     assert "add_digits: out_of_range" in proc.stderr
+
+
+def test_cli_alphabet_topics_with_abc_case(tmp_path, capsys) -> None:
+    """CLI writes a PDF with --abc-case lower --topics trace,missing."""
+    output = tmp_path / "abc_sheet.pdf"
+    code = main([
+        "--topics", "trace,missing",
+        "--abc-case", "lower",
+        "--missing-blanks", "2",
+        "--pages", "2",
+        "--seed", "1",
+        "-o", str(output),
+    ])
+    assert code == 0
+    assert output.exists()
+    assert output.read_bytes()[:5] == b"%PDF-"
+    query = capsys.readouterr().out.strip()
+    assert "t=trace,missing" in query
+    assert "abc_case=lower" in query
+    assert "missing_blanks=2" in query
+
+
+def test_cli_invalid_abc_case_reports_error(tmp_path, capsys) -> None:
+    """CLI reports field error for invalid abc-case."""
+    output = tmp_path / "bad.pdf"
+    code = main([
+        "--topics", "trace",
+        "--abc-case", "invalid",
+        "-o", str(output),
+    ])
+    assert code == 2
+    assert "abc_case: invalid_choice" in capsys.readouterr().err
+    assert not output.exists()

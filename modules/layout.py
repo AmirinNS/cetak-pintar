@@ -5,6 +5,9 @@ from collections.abc import Sequence
 
 from modules.spec import Spec
 
+NO_ANSWER_TOPICS = frozenset({"sifir_ref", "trace"})
+MATCH_PAIRS = 6
+
 
 def sifir_ref_sheets(tables_or_count: int | Sequence[int]) -> int:
     """Calculate the number of sheets required for multiplication reference tables (6 per sheet)."""
@@ -28,6 +31,12 @@ def cards_per_sheet(spec: Spec, topic: str) -> int:
         return 8 if spec.div_digits == 3 else 12
     if topic == "sifir_ref":
         return len(spec.sifir_tables)
+    if topic == "trace":
+        return 4
+    if topic == "missing":
+        return 12
+    if topic == "match":
+        return 3
     raise ValueError(f"Unknown topic: {topic}")
 
 
@@ -35,15 +44,15 @@ def plan_sheets(spec: Spec) -> list[tuple[str, str, int]]:
     """Return ordered list of (kind, topic, sheet_index) for content and answer sheets.
 
     kind: 'content' or 'answer'
-    topic: one of 'grid', 'count', 'add', 'sub', 'sifir_ref', 'sifir', 'div'
+    topic: a selected worksheet topic
     sheet_index: 0-based per-topic index
 
     Accounting rules:
     - pages counts content sheets in total.
     - sifir_ref needs ceil(len(sifir_tables) / 6) sheets.
     - Remaining sheets go round-robin to practice topics in canonical order.
-    - Answer sheets follow all content sheets, one per practice sheet, in the same order.
-    - sifir_ref has no answer sheet.
+    - Answer sheets follow all content sheets in the same order.
+    - Topics in NO_ANSWER_TOPICS have no answer sheet.
     - Maximum PDF length is 40 pages.
     """
     if spec.pages < 1 or spec.pages > 20:
@@ -90,11 +99,11 @@ def plan_sheets(spec: Spec) -> list[tuple[str, str, int]]:
         for topic, sheet_idx in practice_seq[len(practice_topics):]:
             content_sheets.append(("content", topic, sheet_idx))
 
-    # Answer sheets (if ans=1) follow all content sheets, one per practice sheet
+    # Answer sheets (if ans=1) follow content sheets that need answers
     answer_sheets: list[tuple[str, str, int]] = []
     if spec.ans == 1:
         for _kind, topic, sheet_idx in content_sheets:
-            if topic != "sifir_ref":
+            if topic not in NO_ANSWER_TOPICS:
                 answer_sheets.append(("answer", topic, sheet_idx))
 
     total_sheets = content_sheets + answer_sheets

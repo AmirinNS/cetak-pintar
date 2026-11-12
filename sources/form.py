@@ -13,6 +13,7 @@ from modules.spec import (
     MAX_SEED,
     MIN_SEED,
     PRESETS,
+    VALID_ABC_CASES,
     VALID_COUNT_MAX,
     VALID_GRID_STARTS,
     VALID_SHAPES,
@@ -20,6 +21,9 @@ from modules.spec import (
     expand_preset,
 )
 
+MATH_TOPICS: tuple[str, ...] = ("grid", "count", "add", "sub", "sifir_ref", "sifir", "div")
+ABC_TOPICS: tuple[str, ...] = ("trace", "missing", "match")
+VALID_MISSING_BLANKS: tuple[int, ...] = (1, 2, 3)
 ALL_SIFIR_TABLES: tuple[int, ...] = tuple(range(1, 13))
 ALL_DIVISORS: tuple[int, ...] = tuple(range(2, 10))
 
@@ -237,6 +241,18 @@ def build_form_context(
         else str(preset_dict.get("div_rem", 0))
     )
 
+    # Alphabet options
+    abc_case_raw = (
+        raw_map["abc_case"][0].strip()
+        if "abc_case" in raw_map and raw_map["abc_case"]
+        else str(preset_dict.get("abc_case", "upper"))
+    )
+    missing_blanks_raw = (
+        raw_map["missing_blanks"][0].strip()
+        if "missing_blanks" in raw_map and raw_map["missing_blanks"]
+        else str(preset_dict.get("missing_blanks", 1))
+    )
+
     # Format errors
     field_errors: dict[str, str] = {}
     error_list: list[dict[str, str]] = []
@@ -275,6 +291,10 @@ def build_form_context(
             params.append(("div_digits", div_digits_raw))
             params.append(("div_divisors", ",".join(str(x) for x in sorted(div_divisors))))
             params.append(("div_rem", div_rem_raw))
+        if "trace" in selected_topics or "missing" in selected_topics:
+            params.append(("abc_case", abc_case_raw))
+        if "missing" in selected_topics:
+            params.append(("missing_blanks", missing_blanks_raw))
         query = urllib.parse.urlencode(params)
         return f"/?{query}"
 
@@ -299,10 +319,16 @@ def build_form_context(
         "div_digits_val": div_digits_raw,
         "div_divisors": div_divisors,
         "div_rem_val": div_rem_raw,
+        "abc_case_val": abc_case_raw,
+        "missing_blanks_val": missing_blanks_raw,
         "field_errors": field_errors,
         "error_list": error_list,
         "has_errors": bool(errors),
         "VALID_TOPICS": VALID_TOPICS,
+        "MATH_TOPICS": MATH_TOPICS,
+        "ABC_TOPICS": ABC_TOPICS,
+        "VALID_ABC_CASES": VALID_ABC_CASES,
+        "VALID_MISSING_BLANKS": VALID_MISSING_BLANKS,
         "VALID_GRID_STARTS": VALID_GRID_STARTS,
         "VALID_COUNT_MAX": VALID_COUNT_MAX,
         "VALID_SHAPES": VALID_SHAPES,

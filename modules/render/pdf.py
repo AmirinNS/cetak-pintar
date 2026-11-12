@@ -8,7 +8,8 @@ from random import Random
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen.canvas import Canvas
 
-from modules.layout import cards_per_sheet, plan_sheets
+from modules.alphabet import match_sets, missing_rows, trace_letters
+from modules.layout import MATCH_PAIRS, cards_per_sheet, plan_sheets
 from modules.problems import (
     addition,
     counting,
@@ -24,15 +25,20 @@ from modules.render.pages import (
     draw_div,
     draw_div_answers,
     draw_grid,
+    draw_match,
+    draw_match_answers,
+    draw_missing,
+    draw_missing_answers,
     draw_sifir,
     draw_sifir_answers,
     draw_sifir_ref,
     draw_sub,
+    draw_trace,
 )
 from modules.spec import Spec
 
 SUPPORTED_TOPICS: frozenset[str] = frozenset(
-    {"grid", "count", "add", "sub", "sifir_ref", "sifir", "div"}
+    {"grid", "count", "add", "sub", "sifir_ref", "sifir", "div", "trace", "missing", "match"}
 )
 
 
@@ -92,8 +98,26 @@ def render(spec: Spec) -> bytes:
                 )
             elif topic == "div":
                 sheet_data[(topic, sheet_idx)] = division(
-                    rng, spec.div_digits, spec.div_divisors, bool(spec.div_rem),
+                    rng,
+                    spec.div_digits,
+                    spec.div_divisors,
+                    bool(spec.div_rem),
                     cards_per_sheet(spec, "div"),
+                )
+            elif topic == "trace":
+                sheet_data[(topic, sheet_idx)] = trace_letters(
+                    sheet_idx, cards_per_sheet(spec, "trace"), spec.abc_case
+                )
+            elif topic == "missing":
+                sheet_data[(topic, sheet_idx)] = missing_rows(
+                    rng,
+                    spec.abc_case,
+                    spec.missing_blanks,
+                    cards_per_sheet(spec, "missing"),
+                )
+            elif topic == "match":
+                sheet_data[(topic, sheet_idx)] = match_sets(
+                    rng, cards_per_sheet(spec, "match"), MATCH_PAIRS
                 )
 
     buf = io.BytesIO()
@@ -169,6 +193,24 @@ def render(spec: Spec) -> bytes:
                 draw_div_answers(c, spec, data, page_idx, total_pages)
             else:
                 draw_div(c, spec, data, False, page_idx, total_pages)
+        elif topic == "trace":
+            draw_trace(
+                c,
+                spec=spec,
+                letters=data,
+                page_num=page_idx,
+                total_pages=total_pages,
+            )
+        elif topic == "missing":
+            if is_answer:
+                draw_missing_answers(c, spec, data, page_idx, total_pages)
+            else:
+                draw_missing(c, spec, data, False, page_idx, total_pages)
+        elif topic == "match":
+            if is_answer:
+                draw_match_answers(c, spec, data, page_idx, total_pages)
+            else:
+                draw_match(c, spec, data, False, page_idx, total_pages)
 
         c.showPage()
 

@@ -7,14 +7,16 @@ import os
 import subprocess
 import sys
 from random import Random
+from unittest.mock import MagicMock
 
 import pytest
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen.canvas import Canvas
 
+from modules.alphabet import match_sets, missing_rows
 from modules.i18n import t
-from modules.layout import cards_per_sheet, plan_sheets
+from modules.layout import MATCH_PAIRS, cards_per_sheet, plan_sheets
 from modules.problems import (
     DivisionProblem,
     addition,
@@ -26,10 +28,13 @@ from modules.problems import (
     subtraction,
 )
 from modules.render import pages
-from modules.render.pages import draw_div_answers
+from modules.render.pages import (
+    draw_div_answers,
+    draw_match,
+)
 from modules.render.pdf import render
 from modules.render.primitives import CONTENT_W, MARGIN_X, PAGE_H
-from modules.spec import Spec
+from modules.spec import Spec, parse_spec
 
 
 def _page_text_positions(page):
@@ -268,8 +273,8 @@ from modules.spec import Spec
 from modules.render.pdf import render
 
 spec = Spec(
-    t=('grid', 'add', 'sub'),
-    pages=3,
+    t=('grid', 'add', 'sub', 'trace', 'missing', 'match'),
+    pages=6,
     ans=1,
     seed=98765,
     grid_start=101,
@@ -277,6 +282,8 @@ spec = Spec(
     add_regroup=1,
     sub_digits=2,
     sub_borrow=1,
+    abc_case='upper',
+    missing_blanks=2,
 )
 pdf_bytes = render(spec)
 sys.stdout.buffer.write(pdf_bytes)
@@ -638,4 +645,221 @@ def test_answer_check_detects_omitted_answers(monkeypatch: pytest.MonkeyPatch) -
     reader = PdfReader(io.BytesIO(render(spec)))
     with pytest.raises(AssertionError):
         _assert_arithmetic_answers(reader.pages[1], expected_probs)
+
+
+@pytest.mark.parametrize(
+    ("spec_kwargs", "expected_pages"),
+    [
+        ({"t": ("trace",), "pages": 3, "ans": 1}, 3),
+        ({"t": ("trace",), "pages": 3, "ans": 0}, 3),
+        ({"t": ("missing",), "pages": 2, "ans": 1}, 4),
+        ({"t": ("missing",), "pages": 2, "ans": 0}, 2),
+        ({"t": ("match",), "pages": 2, "ans": 1}, 4),
+        ({"t": ("match",), "pages": 2, "ans": 0}, 2),
+        ({"t": ("trace", "missing", "match"), "pages": 3, "ans": 1}, 5),
+    ],
+)
+def test_alphabet_page_counts_and_structure(
+    spec_kwargs: dict, expected_pages: int
+) -> None:
+    """Alphabet topic page counts match plan_sheets accounting across answer modes."""
+    spec = Spec(**spec_kwargs, seed=42)
+    expected_sheets = plan_sheets(spec)
+    assert len(expected_sheets) == expected_pages
+
+    pdf_bytes = render(spec)
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) == expected_pages
+
+    # Metadata and A4 dimensions
+    assert reader.metadata is not None
+    assert reader.metadata.title == "CetakPintar"
+    for idx, page in enumerate(reader.pages, start=1):
+        box = page.mediabox
+        assert pytest.approx(float(box.width), 0.1) == 595.28
+        assert pytest.approx(float(box.height), 0.1) == 841.89
+        text = page.extract_text()
+        assert f"Halaman {idx} / {expected_pages}" in text
+
+
+def test_abc_preset_rendering() -> None:
+    """Preset abc expands to trace, missing, match with 4 content + 2 answer pages."""
+    spec, errors = parse_spec("preset=abc&seed=1")
+    assert errors == []
+    sheets = plan_sheets(spec)
+    assert len(sheets) == 6  # 4 content (trace 0, missing 0, match 0, trace 1) + 2 answers
+
+    pdf_bytes = render(spec)
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) == 6
+
+    # Verify trace sheets have no answer sheet, and missing/match have answer sheets
+    p1_text = reader.pages[0].extract_text()
+    assert "SURIH HURUF" in p1_text
+    p2_text = reader.pages[1].extract_text()
+    assert "HURUF TERTINGGAL" in p2_text
+    p3_text = reader.pages[2].extract_text()
+    assert "PADANKAN HURUF" in p3_text
+    p4_text = reader.pages[3].extract_text()
+    assert "SURIH HURUF" in p4_text
+    p5_text = reader.pages[4].extract_text()
+    assert "SKEMA JAWAPAN" in p5_text
+    assert "Jawapan Huruf Tertinggal" in p5_text
+    p6_text = reader.pages[5].extract_text()
+    assert "SKEMA JAWAPAN" in p6_text
+    assert "Jawapan Padankan Huruf" in p6_text
+
+
+@pytest.mark.parametrize("case", ["upper", "lower"])
+def test_trace_rendering(case: str) -> None:
+    """Letter tracing renders 4 rows on ruled lines without an answer key."""
+    spec = Spec(t=("trace",), pages=2, ans=1, seed=10, abc_case=case)
+    pdf_bytes = render(spec)
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) == 2
+
+    for page in reader.pages:
+        text = page.extract_text()
+        assert "SURIH HURUF" in text
+        # Contains badges 1 to 4
+        for num in ("1", "2", "3", "4"):
+            assert num in text
+
+
+@pytest.mark.parametrize("case", ["upper", "lower"])
+@pytest.mark.parametrize("blanks", [1, 2, 3])
+@pytest.mark.parametrize("lang", ["ms", "en"])
+def test_missing_letters_rendering_and_answers(case: str, blanks: int, lang: str) -> None:
+    """Extracted text on missing letters answer sheet must contain every blank answer."""
+    seed = 777
+    spec = Spec(
+        t=("missing",),
+        pages=1,
+        ans=1,
+        seed=seed,
+        abc_case=case,
+        missing_blanks=blanks,
+        lang=lang,
+    )
+    pdf_bytes = render(spec)
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) == 2
+
+    expected_rows = missing_rows(Random(seed), case, blanks, cards_per_sheet(spec, "missing"))
+    assert len(expected_rows) == 12
+
+    content_text = reader.pages[0].extract_text()
+    answer_text = reader.pages[1].extract_text()
+
+    if lang == "ms":
+        assert "HURUF TERTINGGAL" in content_text
+        assert "SKEMA JAWAPAN" in answer_text
+        assert "Jawapan Huruf Tertinggal" in answer_text
+    else:
+        assert "MISSING LETTERS" in content_text
+        assert "ANSWER KEY" in answer_text
+        assert "Missing Letters Answers" in answer_text
+
+    # On answer sheet, check that every blank letter was rendered
+    for row in expected_rows:
+        for blank_idx in row.blanks:
+            blank_letter = row.letters[blank_idx]
+            assert blank_letter in answer_text
+
+        # Verify that all 6 consecutive letters are present in answer text
+        for letter in row.letters:
+            assert letter in answer_text
+
+
+@pytest.mark.parametrize("lang", ["ms", "en"])
+def test_match_rendering_and_answers(lang: str) -> None:
+    """Extracted text on match answer sheet must contain all matching pairs."""
+    seed = 888
+    spec = Spec(t=("match",), pages=1, ans=1, seed=seed, lang=lang)
+    pdf_bytes = render(spec)
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) == 2
+
+    expected_match_sets = match_sets(Random(seed), cards_per_sheet(spec, "match"), MATCH_PAIRS)
+    assert len(expected_match_sets) == 3
+
+    content_text = reader.pages[0].extract_text()
+    answer_text = reader.pages[1].extract_text()
+
+    if lang == "ms":
+        assert "PADANKAN HURUF" in content_text
+        assert "SKEMA JAWAPAN" in answer_text
+        assert "Jawapan Padankan Huruf" in answer_text
+    else:
+        assert "LETTER MATCHING" in content_text
+        assert "ANSWER KEY" in answer_text
+        assert "Letter Matching Answers" in answer_text
+
+    # Content sheet contains both left uppercase and right lowercase letters
+    for ms in expected_match_sets:
+        for c in ms.left:
+            assert c in content_text
+        for c in ms.right:
+            assert c in content_text
+
+    # Answer sheet renders pair labels A - a at the bottom of each card
+    for ms in expected_match_sets:
+        for k in range(len(ms.left)):
+            left_char = ms.left[k]
+            right_char = ms.right[ms.pairs[k]]
+            expected_pair = f"{left_char} - {right_char}"
+            assert expected_pair in answer_text
+
+
+def test_match_canvas_connecting_lines() -> None:
+    """Verify that draw_match draws lines connecting left dots to paired right dots.
+
+    Robust assertion strategy explanation:
+    1. On the answer sheet, draw_match draws explicit connecting lines from
+       (left_dot_x, left_y) to (right_dot_x, right_y) where right_y is determined
+       by match_set.pairs[left_idx].
+    2. We verify the canvas.line() coordinates match the geometry of the pairs.
+    3. The answer sheet additionally renders pair summary labels (e.g. 'A - a')
+       at the bottom of each card, enabling clean text verification via pypdf.
+    """
+    spec = Spec(t=("match",), pages=1, ans=1, seed=42)
+    m_sets = match_sets(Random(42), 1, MATCH_PAIRS)
+    assert len(m_sets) == 1
+    m_set = m_sets[0]
+
+    canvas = MagicMock()
+    draw_match(canvas, spec, m_sets, is_answer=True, page_num=1, total_pages=1)
+
+    # Filter to connecting lines between left and right dots
+    # In draw_match, left_dot_x = MARGIN_X + 85.0 and right_dot_x = MARGIN_X + CONTENT_W - 85.0
+    left_dot_x = MARGIN_X + 85.0
+    right_dot_x = MARGIN_X + CONTENT_W - 85.0
+
+    connecting_lines = [
+        call.args
+        for call in canvas.line.call_args_list
+        if pytest.approx(call.args[0], 0.1) == left_dot_x
+        and pytest.approx(call.args[2], 0.1) == right_dot_x
+    ]
+
+    assert len(connecting_lines) == MATCH_PAIRS
+
+    # Calculate item_y formula from draw_match
+    # card_y for 1 card:
+    top = PAGE_H - 84.0
+    bottom = 44.0
+    card_h = top - bottom
+    card_y = top - card_h
+    usable_top = card_y + card_h - 28.0
+    usable_bottom = card_y + 28.0
+    n_items = len(m_set.left)
+    item_step = (usable_top - usable_bottom) / (n_items - 1)
+
+    for left_idx, right_idx in enumerate(m_set.pairs):
+        expected_y_left = usable_top - left_idx * item_step
+        expected_y_right = usable_top - right_idx * item_step
+        x1, y1, x2, y2 = connecting_lines[left_idx]
+        assert pytest.approx(y1, 0.1) == expected_y_left
+        assert pytest.approx(y2, 0.1) == expected_y_right
+
 

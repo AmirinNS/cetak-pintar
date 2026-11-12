@@ -5,8 +5,12 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import Any
 
-VALID_TOPICS: tuple[str, ...] = ("grid", "count", "add", "sub", "sifir_ref", "sifir", "div")
+VALID_TOPICS: tuple[str, ...] = (
+    "grid", "count", "add", "sub", "sifir_ref", "sifir", "div",
+    "trace", "missing", "match",
+)
 VALID_LANGUAGES: tuple[str, ...] = ("ms", "en")
+VALID_ABC_CASES: tuple[str, ...] = ("upper", "lower")
 VALID_GRID_STARTS: tuple[int, ...] = (1, 101, 201, 301, 401, 501, 601, 701, 801, 901)
 VALID_COUNT_MAX: tuple[int, ...] = (5, 10, 20)
 VALID_SHAPES: tuple[str, ...] = ("star", "circle", "apple", "fish", "flower")
@@ -30,6 +34,8 @@ SCALAR_KEYS: frozenset[str] = frozenset(
         "sifir_n",
         "div_digits",
         "div_rem",
+        "abc_case",
+        "missing_blanks",
     }
 )
 
@@ -68,6 +74,11 @@ PRESETS: dict[str, dict[str, Any]] = {
         "div_divisors": (2, 3, 4, 5, 6, 7, 8, 9),
         "div_rem": 0,
     },
+    "abc": {
+        "t": ("trace", "missing", "match"),
+        "abc_case": "upper",
+        "missing_blanks": 1,
+    },
 }
 
 
@@ -98,6 +109,8 @@ class Spec:
     div_digits: int = 2
     div_divisors: tuple[int, ...] = (2, 3, 4, 5, 6, 7, 8, 9)
     div_rem: int = 0
+    abc_case: str = "upper"
+    missing_blanks: int = 1
 
     def __post_init__(self) -> None:
         if not isinstance(self.t, tuple):
@@ -130,6 +143,10 @@ class Spec:
             object.__setattr__(self, "div_digits", 2)
             object.__setattr__(self, "div_divisors", (2, 3, 4, 5, 6, 7, 8, 9))
             object.__setattr__(self, "div_rem", 0)
+        if "trace" not in self.t and "missing" not in self.t:
+            object.__setattr__(self, "abc_case", "upper")
+        if "missing" not in self.t:
+            object.__setattr__(self, "missing_blanks", 1)
 
     @property
     def topics(self) -> tuple[str, ...]:
@@ -535,7 +552,36 @@ def parse_spec(data: Any) -> tuple[Spec | None, list[tuple[str, str]]]:
         elif "div_rem" in preset_dict:
             div_rem = int(preset_dict["div_rem"])
 
-    # 12. Cross-field: pages >= min_pages for selected topics
+    # 12. Alphabet options
+    abc_case: str = "upper"
+    missing_blanks: int = 1
+    if "trace" in selected_topics or "missing" in selected_topics:
+        if "abc_case" in raw_map:
+            if len(raw_map["abc_case"]) == 1:
+                val_str = raw_map["abc_case"][0].strip()
+                if val_str not in VALID_ABC_CASES:
+                    errors.append(("abc_case", "invalid_choice"))
+                else:
+                    abc_case = val_str
+        elif "abc_case" in preset_dict:
+            abc_case = str(preset_dict["abc_case"])
+
+    if "missing" in selected_topics:
+        if "missing_blanks" in raw_map:
+            if len(raw_map["missing_blanks"]) == 1:
+                val_str = raw_map["missing_blanks"][0].strip()
+                try:
+                    b_val = int(val_str)
+                    if b_val < 1 or b_val > 3:
+                        errors.append(("missing_blanks", "out_of_range"))
+                    else:
+                        missing_blanks = b_val
+                except ValueError:
+                    errors.append(("missing_blanks", "invalid_integer"))
+        elif "missing_blanks" in preset_dict:
+            missing_blanks = int(preset_dict["missing_blanks"])
+
+    # 13. Cross-field: pages >= min_pages for selected topics
     if resolved_topics is not None and pages_valid:
         ref_count = math.ceil(len(sifir_tables) / 6) if "sifir_ref" in selected_topics else 0
         practice_count = len([t for t in selected_topics if t != "sifir_ref"])
@@ -567,6 +613,8 @@ def parse_spec(data: Any) -> tuple[Spec | None, list[tuple[str, str]]]:
         div_digits=div_digits,
         div_divisors=div_divisors,
         div_rem=div_rem,
+        abc_case=abc_case,
+        missing_blanks=missing_blanks,
     )
     return spec, []
 
@@ -608,5 +656,11 @@ def spec_to_query(spec: Spec) -> str:
         params.append(("div_digits", str(spec.div_digits)))
         params.append(("div_divisors", ",".join(str(x) for x in sorted(spec.div_divisors))))
         params.append(("div_rem", str(spec.div_rem)))
+
+    if "trace" in spec.t or "missing" in spec.t:
+        params.append(("abc_case", spec.abc_case))
+
+    if "missing" in spec.t:
+        params.append(("missing_blanks", str(spec.missing_blanks)))
 
     return "&".join(f"{k}={v}" for k, v in params)

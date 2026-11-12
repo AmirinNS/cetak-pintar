@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        const topics = ["grid", "count", "add", "sub", "sifir", "div"];
+        const topics = ["grid", "count", "add", "sub", "sifir", "div", "missing"];
         topics.forEach((t) => {
             const fieldset = document.getElementById(`group-topic-${t}`);
             if (!fieldset) return;
@@ -75,6 +75,23 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 sifirRefFieldset.classList.add("d-none");
                 sifirRefFieldset.querySelectorAll("input, select").forEach((el) => {
+                    el.disabled = true;
+                });
+            }
+        }
+
+        // ABC case option group (shared between trace and missing)
+        const abcCaseFieldset = document.getElementById("group-topic-abc_case") || document.getElementById("group-topic-abc");
+        if (abcCaseFieldset) {
+            const hasAbc = checkedTopics.has("trace") || checkedTopics.has("missing");
+            if (hasAbc) {
+                abcCaseFieldset.classList.remove("d-none");
+                abcCaseFieldset.querySelectorAll("input, select").forEach((el) => {
+                    el.disabled = false;
+                });
+            } else {
+                abcCaseFieldset.classList.add("d-none");
+                abcCaseFieldset.querySelectorAll("input, select").forEach((el) => {
                     el.disabled = true;
                 });
             }
@@ -167,6 +184,18 @@ document.addEventListener("DOMContentLoaded", () => {
             searchParams.set("div_divisors", divs.join(","));
             if (formData.has("div_rem")) {
                 searchParams.set("div_rem", formData.get("div_rem"));
+            }
+        }
+
+        if (checkedTopics.has("trace") || checkedTopics.has("missing")) {
+            if (formData.has("abc_case")) {
+                searchParams.set("abc_case", formData.get("abc_case"));
+            }
+        }
+
+        if (checkedTopics.has("missing")) {
+            if (formData.has("missing_blanks")) {
+                searchParams.set("missing_blanks", formData.get("missing_blanks"));
             }
         }
 

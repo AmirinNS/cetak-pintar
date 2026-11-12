@@ -318,3 +318,31 @@ def test_i18n_ref_pages_mismatch_message() -> None:
     assert err_ms == ms_msg
     err_en = t("error_ref_pages_mismatch", lang="en")
     assert err_en == en_msg
+
+
+def test_alphabet_options_rendered_form_controls(client: FlaskClient) -> None:
+    """The rendered form with trace and missing checked has exactly one enabled abc_case control."""
+    resp = client.get("/?t=trace,missing&seed=1")
+    assert resp.status_code == 200
+    parser = parse_html(resp.data.decode("utf-8"))
+
+    # Exactly one enabled abc_case select control
+    abc_case_selects = [s for s in parser.selects if s.get("name") == "abc_case"]
+    assert len(abc_case_selects) == 1
+    assert "disabled" not in abc_case_selects[0]
+
+    # Exactly one enabled missing_blanks select control
+    missing_selects = [s for s in parser.selects if s.get("name") == "missing_blanks"]
+    assert len(missing_selects) == 1
+    assert "disabled" not in missing_selects[0]
+
+
+def test_preset_abc_prechecks_topics(client: FlaskClient) -> None:
+    """preset=abc pre-checks the three alphabet topics in the form."""
+    resp = client.get("/?preset=abc")
+    assert resp.status_code == 200
+    parser = parse_html(resp.data.decode("utf-8"))
+
+    topic_checkboxes = [inp for inp in parser.inputs if inp.get("name") == "t"]
+    checked_topics = {inp.get("value") for inp in topic_checkboxes if "checked" in inp}
+    assert checked_topics == {"trace", "missing", "match"}

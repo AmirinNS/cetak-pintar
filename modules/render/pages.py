@@ -7,13 +7,17 @@ from typing import Sequence
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen.canvas import Canvas
 
+from modules.alphabet import MatchSet, MissingRow
 from modules.i18n import t
-from modules.layout import cards_per_sheet
+from modules.layout import MATCH_PAIRS, cards_per_sheet
 from modules.problems import ArithmeticProblem, CountingProblem, DivisionProblem
+from modules.render.letters import draw_letter, letter_width
 from modules.render.primitives import (
+    COLOR_ANSWER_BG,
     COLOR_BLACK,
     COLOR_FAINT,
     COLOR_LIGHT,
+    COLOR_MID,
     COLOR_PILL_BG,
     CONTENT_W,
     MARGIN_X,
@@ -839,4 +843,327 @@ def draw_count_answers(
 ) -> None:
     """Render the counting answer sheet for a practice sheet."""
     draw_count(c, spec, problems, is_answer=True, page_num=page_num, total_pages=total_pages)
+
+
+def draw_trace(
+    c: Canvas,
+    spec: Spec,
+    letters: Sequence[str],
+    page_num: int,
+    total_pages: int,
+    is_answer: bool = False,
+) -> None:
+    """Render an alphabet letter tracing practice sheet with ruled guidelines."""
+    sub_key = "trace_subtitle_upper" if spec.abc_case == "upper" else "trace_subtitle_lower"
+    draw_header(
+        c,
+        title=t("trace_title", lang=spec.lang),
+        subtitle=t(sub_key, lang=spec.lang),
+        instruction=t("trace_instruction", lang=spec.lang),
+        lang=spec.lang,
+        is_answer=False,
+        score_max=None,
+    )
+
+    num_rows = len(letters)
+    top = PAGE_H - 84.0
+    bottom = 44.0
+    available_h = top - bottom
+    gap = 14.0
+    row_h = (available_h - (num_rows - 1) * gap) / num_rows
+    # Height of glyph measured to cap line in points
+    glyph_h = 56.0
+
+    for idx, char in enumerate(letters):
+        card_x = MARGIN_X
+        card_y = top - (idx + 1) * row_h - idx * gap
+        card_w = CONTENT_W
+
+        # Outer card container
+        rounded_box(
+            c, card_x, card_y, card_w, row_h, radius=6.0, stroke=1, fill=0, line_width=0.85
+        )
+
+        # Question / row number badge
+        badge_number(c, card_x + 14.0, card_y + row_h - 14.0, idx + 1)
+
+        # Ruled writing lines span horizontally across the card
+        line_x1 = card_x + 24.0
+        line_x2 = card_x + card_w - 24.0
+        y_base = card_y + 46.0
+
+        # Cap line (solid)
+        ruled_line(
+            c,
+            line_x1,
+            y_base + glyph_h,
+            line_x2,
+            y_base + glyph_h,
+            stroke_color=COLOR_LIGHT,
+            line_width=0.75,
+        )
+
+        # Midline (dashed x-height line)
+        c.saveState()
+        c.setStrokeColor(COLOR_LIGHT)
+        c.setLineWidth(0.75)
+        c.setDash([3.5, 3.5])
+        c.line(line_x1, y_base + 0.5 * glyph_h, line_x2, y_base + 0.5 * glyph_h)
+        c.restoreState()
+
+        # Baseline (solid)
+        ruled_line(c, line_x1, y_base, line_x2, y_base, stroke_color=COLOR_MID, line_width=0.9)
+
+        # Solid model letter at left on the ruled lines
+        model_x = line_x1 + 14.0
+        draw_letter(c, char, model_x, y_base, glyph_h, dotted=False)
+        w = letter_width(char, glyph_h)
+
+        # Subtle vertical dashed divider separating model letter from tracing area
+        divider_x = model_x + w + 18.0
+        c.saveState()
+        c.setStrokeColor(COLOR_LIGHT)
+        c.setLineWidth(0.6)
+        c.setDash([2.5, 2.5])
+        c.line(divider_x, card_y + 16.0, divider_x, card_y + row_h - 16.0)
+        c.restoreState()
+
+        # Dotted repeats filling the row on the ruled lines
+        practice_start_x = divider_x + 18.0
+        practice_end_x = line_x2 - 14.0
+        avail_w = practice_end_x - practice_start_x
+        repeat_step = max(w + 20.0, 52.0)
+        num_repeats = max(3, int(avail_w / repeat_step))
+        step = (avail_w - w) / (num_repeats - 1) if num_repeats > 1 else 0.0
+
+        for r_idx in range(num_repeats):
+            rep_x = practice_start_x + r_idx * step
+            draw_letter(c, char, rep_x, y_base, glyph_h, dotted=True)
+
+    draw_footer(c, page_num=page_num, total_pages=total_pages, lang=spec.lang)
+
+
+def draw_missing(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[MissingRow],
+    is_answer: bool,
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render a missing-letters alphabet practice sheet or answer sheet."""
+    if not is_answer:
+        title = t("missing_title", lang=spec.lang)
+        sub_key = (
+            "missing_subtitle_upper" if spec.abc_case == "upper" else "missing_subtitle_lower"
+        )
+        subtitle = t(sub_key, lang=spec.lang)
+        instruction = t("missing_instruction", lang=spec.lang)
+        score_max = len(problems) * spec.missing_blanks
+    else:
+        title = t("answer_key_title", lang=spec.lang)
+        subtitle = t("missing_answer_subtitle", lang=spec.lang)
+        instruction = t("answer_key_instruction", lang=spec.lang)
+        score_max = None
+
+    draw_header(
+        c,
+        title=title,
+        subtitle=subtitle,
+        instruction=instruction,
+        lang=spec.lang,
+        is_answer=is_answer,
+        score_max=score_max,
+    )
+
+    num_rows = len(problems)
+    top = PAGE_H - 84.0
+    bottom = 44.0
+    available_h = top - bottom
+    gap = 10.0
+    row_h = (available_h - (num_rows - 1) * gap) / num_rows
+
+    boxes_start_x = MARGIN_X + 32.0
+    avail_w = CONTENT_W - 32.0
+    box_gap = 7.0
+    box_w = (avail_w - 5 * box_gap) / 6.0
+
+    for row_idx, row_data in enumerate(problems):
+        row_y = top - (row_idx + 1) * row_h - row_idx * gap
+
+        # Row number badge
+        badge_number(c, MARGIN_X + 12.0, row_y + row_h / 2.0, row_idx + 1)
+
+        # 6 consecutive letter boxes
+        for col_idx, letter in enumerate(row_data.letters):
+            box_x = boxes_start_x + col_idx * (box_w + box_gap)
+            is_blank = col_idx in row_data.blanks
+
+            if is_blank and is_answer:
+                # Answer blank: highlighted background with filled answer
+                rounded_box(
+                    c,
+                    box_x,
+                    row_y,
+                    box_w,
+                    row_h,
+                    radius=5.0,
+                    stroke=1,
+                    fill=1,
+                    fill_color=COLOR_ANSWER_BG,
+                    line_width=1.0,
+                )
+                c.setFillColor(COLOR_BLACK)
+                c.setFont("Helvetica-Bold", 19)
+                c.drawCentredString(box_x + box_w / 2.0, row_y + (row_h - 14.0) / 2.0, letter)
+            elif is_blank and not is_answer:
+                # Practice blank: empty box for pupil to write in
+                rounded_box(
+                    c,
+                    box_x,
+                    row_y,
+                    box_w,
+                    row_h,
+                    radius=5.0,
+                    stroke=1,
+                    fill=0,
+                    line_width=0.85,
+                )
+            else:
+                # Given letter
+                rounded_box(
+                    c,
+                    box_x,
+                    row_y,
+                    box_w,
+                    row_h,
+                    radius=5.0,
+                    stroke=1,
+                    fill=0,
+                    line_width=0.85,
+                )
+                c.setFillColor(COLOR_BLACK)
+                c.setFont("Helvetica-Bold", 19)
+                c.drawCentredString(box_x + box_w / 2.0, row_y + (row_h - 14.0) / 2.0, letter)
+
+    draw_footer(c, page_num=page_num, total_pages=total_pages, lang=spec.lang)
+
+
+def draw_missing_answers(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[MissingRow],
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render the missing-letters answer sheet for a practice sheet."""
+    draw_missing(c, spec, problems, is_answer=True, page_num=page_num, total_pages=total_pages)
+
+
+def draw_match(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[MatchSet],
+    is_answer: bool,
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render a letter matching practice sheet or answer sheet."""
+    if not is_answer:
+        title = t("match_title", lang=spec.lang)
+        subtitle = t("match_subtitle", lang=spec.lang)
+        instruction = t("match_instruction", lang=spec.lang)
+        score_max = len(problems) * MATCH_PAIRS
+    else:
+        title = t("answer_key_title", lang=spec.lang)
+        subtitle = t("match_answer_subtitle", lang=spec.lang)
+        instruction = t("answer_key_instruction", lang=spec.lang)
+        score_max = None
+
+    draw_header(
+        c,
+        title=title,
+        subtitle=subtitle,
+        instruction=instruction,
+        lang=spec.lang,
+        is_answer=is_answer,
+        score_max=score_max,
+    )
+
+    num_cards = len(problems)
+    top = PAGE_H - 84.0
+    bottom = 44.0
+    available_h = top - bottom
+    gap = 14.0
+    card_h = (available_h - (num_cards - 1) * gap) / num_cards
+
+    for card_idx, match_set in enumerate(problems):
+        card_x = MARGIN_X
+        card_y = top - (card_idx + 1) * card_h - card_idx * gap
+        card_w = CONTENT_W
+
+        # Card container
+        rounded_box(
+            c, card_x, card_y, card_w, card_h, radius=6.0, stroke=1, fill=0, line_width=0.85
+        )
+
+        # Question / card badge
+        badge_number(c, card_x + 14.0, card_y + card_h - 14.0, card_idx + 1)
+
+        left_char_x = card_x + 48.0
+        left_dot_x = card_x + 85.0
+        right_dot_x = card_x + card_w - 85.0
+        right_char_x = card_x + card_w - 48.0
+
+        usable_top = card_y + card_h - 28.0
+        usable_bottom = card_y + 28.0
+        n_items = len(match_set.left)
+        item_step = (usable_top - usable_bottom) / (n_items - 1) if n_items > 1 else 0.0
+
+        # Draw left uppercase column and right lowercase column
+        c.setFont("Helvetica-Bold", 17)
+        c.setFillColor(COLOR_BLACK)
+
+        for k, char in enumerate(match_set.left):
+            y = usable_top - k * item_step
+            c.drawCentredString(left_char_x, y - 5.5, char)
+            c.circle(left_dot_x, y, 3.2, stroke=0, fill=1)
+
+        for k, char in enumerate(match_set.right):
+            y = usable_top - k * item_step
+            c.drawCentredString(right_char_x, y - 5.5, char)
+            c.circle(right_dot_x, y, 3.2, stroke=0, fill=1)
+
+        # On answer sheet, draw matching connecting lines and pair text summary
+        if is_answer:
+            c.saveState()
+            c.setStrokeColor(COLOR_BLACK)
+            c.setLineWidth(1.2)
+            for left_idx, right_idx in enumerate(match_set.pairs):
+                y_left = usable_top - left_idx * item_step
+                y_right = usable_top - right_idx * item_step
+                c.line(left_dot_x, y_left, right_dot_x, y_right)
+            c.restoreState()
+
+            pairs_text = "   ".join(
+                f"{match_set.left[k]} - {match_set.right[match_set.pairs[k]]}"
+                for k in range(n_items)
+            )
+            c.setFont("Helvetica-Bold", 9)
+            c.setFillColor(COLOR_MID)
+            c.drawCentredString(card_x + card_w / 2.0, card_y + 9.0, pairs_text)
+
+    draw_footer(c, page_num=page_num, total_pages=total_pages, lang=spec.lang)
+
+
+def draw_match_answers(
+    c: Canvas,
+    spec: Spec,
+    problems: Sequence[MatchSet],
+    page_num: int,
+    total_pages: int,
+) -> None:
+    """Render the letter matching answer sheet for a practice sheet."""
+    draw_match(c, spec, problems, is_answer=True, page_num=page_num, total_pages=total_pages)
+
 

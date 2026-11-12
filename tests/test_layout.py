@@ -172,3 +172,46 @@ def test_cards_per_sheet():
     assert cards_per_sheet(s3, "add") == 16
     assert cards_per_sheet(s3, "sub") == 16
     assert cards_per_sheet(s3, "div") == 8
+
+
+def test_trace_round_robin_without_answers():
+    spec, errors = parse_spec({"t": "add,trace", "pages": 4})
+    assert errors == []
+    assert plan_sheets(spec) == [
+        ("content", "add", 0),
+        ("content", "trace", 0),
+        ("content", "add", 1),
+        ("content", "trace", 1),
+        ("answer", "add", 0),
+        ("answer", "add", 1),
+    ]
+
+
+@pytest.mark.parametrize("ans", [0, 1])
+def test_trace_only_uses_all_content_pages(ans):
+    spec, errors = parse_spec({"t": "trace", "pages": 20, "ans": ans})
+    assert errors == []
+    assert plan_sheets(spec) == [("content", "trace", index) for index in range(20)]
+
+
+def test_alphabet_with_fixed_reference_sheets():
+    spec, errors = parse_spec({
+        "t": "sifir_ref,trace,missing,match", "pages": 6,
+        "sifir_tables": "1,2,3,4,5,6,7",
+    })
+    assert errors == []
+    assert plan_sheets(spec) == [
+        ("content", "sifir_ref", 0),
+        ("content", "sifir_ref", 1),
+        ("content", "trace", 0),
+        ("content", "missing", 0),
+        ("content", "match", 0),
+        ("content", "trace", 1),
+        ("answer", "missing", 0),
+        ("answer", "match", 0),
+    ]
+
+
+@pytest.mark.parametrize("topic, count", [("trace", 4), ("missing", 12), ("match", 3)])
+def test_alphabet_cards_per_sheet(topic, count):
+    assert cards_per_sheet(Spec(t=(topic,)), topic) == count

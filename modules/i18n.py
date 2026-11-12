@@ -24,6 +24,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "preset_t1_badge": "Tahun 1",
         "preset_t2_badge": "Tahun 2",
         "preset_t3_badge": "Tahun 3",
+        "preset_abc_badge": "Abjad",
         # Document header & footer labels
         "label_name": "Nama:",
         "label_date": "Tarikh:",
@@ -43,6 +44,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "alt_topic_sifir_ref": "Ikon rujukan jadual sifir",
         "alt_topic_sifir": "Ikon latihan darab sifir",
         "alt_topic_div": "Ikon operasi bahagi bentuk lazim",
+        "alt_topic_trace": "Ikon surih huruf",
+        "alt_topic_missing": "Ikon isi huruf tertinggal",
+        "alt_topic_match": "Ikon padankan huruf",
         # Topic: Grid (Carta Nombor 100)
         "topic_grid_name": "Carta Nombor 100",
         "grid_title": "CARTA NOMBOR 100",
@@ -89,6 +93,29 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "div_instruction": "Bahagi dalam bentuk lazim. Tunjukkan langkah pengiraan dan baki.",
         "div_answer_subtitle": "Jawapan Bahagi ({digits} Digit)",
         "div_result": "{dividend} ÷ {divisor} = {quotient}, baki {remainder}",
+        # Topic: Trace (Surih Huruf)
+        "topic_trace_name": "Surih Huruf",
+        "trace_title": "SURIH HURUF",
+        "trace_subtitle": "Latihan Menulis Huruf ({case})",
+        "trace_subtitle_upper": "Latihan Menulis Huruf Besar",
+        "trace_subtitle_lower": "Latihan Menulis Huruf Kecil",
+        "trace_instruction": "Surih huruf mengikut garisan putus-putus dengan kemas.",
+        # Topic: Missing (Huruf Tertinggal)
+        "topic_missing_name": "Huruf Tertinggal",
+        "missing_title": "HURUF TERTINGGAL",
+        "missing_subtitle": "Isi Huruf yang Tertinggal",
+        "missing_subtitle_upper": "Isi Huruf Besar yang Tertinggal",
+        "missing_subtitle_lower": "Isi Huruf Kecil yang Tertinggal",
+        "missing_instruction": "Tulis huruf yang tertinggal dalam petak mengikut urutan abjad.",
+        "missing_answer_subtitle": "Jawapan Huruf Tertinggal",
+        # Topic: Match (Padankan Huruf)
+        "topic_match_name": "Padankan Huruf",
+        "match_title": "PADANKAN HURUF",
+        "match_subtitle": "Padankan Huruf Besar dan Huruf Kecil",
+        "match_instruction": (
+            "Padankan huruf besar dengan huruf kecil yang betul menggunakan garisan."
+        ),
+        "match_answer_subtitle": "Jawapan Padankan Huruf",
         # Presets descriptions
         "preset_t1_desc": "Gaya Tahun 1: nombor hingga 100, tambah dan tolak tanpa kumpul semula",
         "preset_t2_desc": (
@@ -99,12 +126,26 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
             "Gaya Tahun 3: tambah dan tolak 3 digit kumpul semula, sifir 6, 7, 8, 9, bahagi 2 digit"
             " tepat"
         ),
+        "preset_abc_desc": (
+            "Asas abjad: surih huruf, isi huruf tertinggal, dan padankan huruf besar dan kecil"
+        ),
         # Form section titles & hints
         "section_topics": "1. Pilih Topik Latihan",
         "section_topics_hint": "Tandakan sekurang-kurangnya satu topik yang ingin dimuatkan.",
+        "section_math": "Matematik",
+        "section_abc": "Abjad dan Kosa Kata",
         "section_options": "2. Tetapan Terperinci Topik",
         "section_general": "3. Tetapan Lembaran & Halaman",
         # Form field labels & hints
+        "label_abc_case": "Jenis Huruf:",
+        "hint_abc_case": "Pilih sama ada mahu melatih huruf besar atau huruf kecil.",
+        "opt_abc_case_upper": "Huruf Besar (A-Z)",
+        "opt_abc_case_lower": "Huruf Kecil (a-z)",
+        "label_missing_blanks": "Bilangan Huruf Tertinggal Setiap Baris:",
+        "hint_missing_blanks": "Pilih bilangan petak kosong bagi setiap baris (1 hingga 3).",
+        "opt_missing_blanks_1": "1 huruf",
+        "opt_missing_blanks_2": "2 huruf",
+        "opt_missing_blanks_3": "3 huruf",
         "label_grid_start": "Nombor Mula Carta:",
         "hint_grid_start": "Pilih julat 100 nombor (contohnya 1-100 atau 101-200).",
         "label_grid_blanks": "Bilangan Petak Kosong (15 - 60):",
@@ -229,6 +270,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "preset_t1_badge": "Year 1",
         "preset_t2_badge": "Year 2",
         "preset_t3_badge": "Year 3",
+        "preset_abc_badge": "Alphabet",
         # Document header & footer labels
         "label_name": "Name:",
         "label_date": "Date:",
@@ -248,6 +290,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "alt_topic_sifir_ref": "Multiplication tables reference icon",
         "alt_topic_sifir": "Multiplication practice icon",
         "alt_topic_div": "Long division icon",
+        "alt_topic_trace": "Letter tracing icon",
+        "alt_topic_missing": "Missing letters icon",
+        "alt_topic_match": "Letter matching icon",
         # Topic: Grid (100-Number Grid)
         "topic_grid_name": "100-Number Grid",
         "grid_title": "100-NUMBER GRID",
@@ -296,6 +341,27 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "div_instruction": "Use long division. Show your working and the remainder.",
         "div_answer_subtitle": "Division Answers ({digits}-Digit)",
         "div_result": "{dividend} ÷ {divisor} = {quotient}, remainder {remainder}",
+        # Topic: Trace (Letter Tracing)
+        "topic_trace_name": "Letter Tracing",
+        "trace_title": "LETTER TRACING",
+        "trace_subtitle": "Letter Writing Practice ({case})",
+        "trace_subtitle_upper": "Uppercase Letter Writing Practice",
+        "trace_subtitle_lower": "Lowercase Letter Writing Practice",
+        "trace_instruction": "Trace the letters neatly along the dotted lines.",
+        # Topic: Missing (Missing Letters)
+        "topic_missing_name": "Missing Letters",
+        "missing_title": "MISSING LETTERS",
+        "missing_subtitle": "Fill in the Missing Letters",
+        "missing_subtitle_upper": "Fill in the Missing Uppercase Letters",
+        "missing_subtitle_lower": "Fill in the Missing Lowercase Letters",
+        "missing_instruction": "Write the missing letters in the boxes in alphabetical order.",
+        "missing_answer_subtitle": "Missing Letters Answers",
+        # Topic: Match (Letter Matching)
+        "topic_match_name": "Letter Matching",
+        "match_title": "LETTER MATCHING",
+        "match_subtitle": "Match Uppercase and Lowercase Letters",
+        "match_instruction": "Draw a line to match each uppercase letter to its lowercase letter.",
+        "match_answer_subtitle": "Letter Matching Answers",
         # Presets descriptions
         "preset_t1_desc": "Tahun 1 style: numbers to 100, add and subtract without regrouping",
         "preset_t2_desc": (
@@ -305,12 +371,26 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
             "Tahun 3 style: 3-digit add and subtract with regrouping, tables 6, 7, 8, 9, exact"
             " 2-digit division"
         ),
+        "preset_abc_desc": (
+            "Alphabet style: letter tracing, missing letters, and upper-lowercase matching"
+        ),
         # Form section titles & hints
         "section_topics": "1. Choose Practice Topics",
         "section_topics_hint": "Check at least one topic to include in the worksheet.",
+        "section_math": "Math",
+        "section_abc": "Alphabet and Words",
         "section_options": "2. Topic Options & Difficulty",
         "section_general": "3. Worksheet & Page Settings",
         # Form field labels & hints
+        "label_abc_case": "Letter Case:",
+        "hint_abc_case": "Choose uppercase or lowercase letters.",
+        "opt_abc_case_upper": "Uppercase (A-Z)",
+        "opt_abc_case_lower": "Lowercase (a-z)",
+        "label_missing_blanks": "Missing Letters Per Row:",
+        "hint_missing_blanks": "How many blank boxes to fill per row.",
+        "opt_missing_blanks_1": "1 letter",
+        "opt_missing_blanks_2": "2 letters",
+        "opt_missing_blanks_3": "3 letters",
         "label_grid_start": "Grid Start Number:",
         "hint_grid_start": "Select the 100-number range (e.g. 1-100 or 101-200).",
         "label_grid_blanks": "Blank Cells (15 - 60):",

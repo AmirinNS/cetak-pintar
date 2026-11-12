@@ -287,3 +287,30 @@ def test_localized_404_error_page(client: FlaskClient) -> None:
     assert resp_en.status_code == 404
     assert '<html lang="en">' in resp_en.data.decode("utf-8")
     assert "Page Not Found" in resp_en.data.decode("utf-8")
+
+
+def test_alphabet_topics_cetak_and_error(client: FlaskClient) -> None:
+    """Alphabet topics generate a PDF; invalid abc_case returns 400 with field error."""
+    # /cetak?t=trace,missing,match&seed=1 returns a PDF
+    resp = client.get("/cetak?t=trace,missing,match&seed=1")
+    assert resp.status_code == 200
+    assert resp.headers["Content-Type"] == "application/pdf"
+    assert resp.data.startswith(b"%PDF-")
+
+    # Invalid abc_case returns 400 with field error shown (Malay)
+    resp_bad_ms = client.get("/cetak?t=trace&abc_case=invalid&seed=1&lang=ms")
+    assert resp_bad_ms.status_code == 400
+    html_bad_ms = resp_bad_ms.data.decode("utf-8")
+    assert '<html lang="ms">' in html_bad_ms
+    assert 'id="error-summary"' in html_bad_ms
+    assert 'href="#field-abc_case"' in html_bad_ms
+    assert "Pilihan tidak sah." in html_bad_ms
+
+    # Invalid abc_case in English
+    resp_bad_en = client.get("/cetak?t=missing&abc_case=invalid&seed=1&lang=en")
+    assert resp_bad_en.status_code == 400
+    html_bad_en = resp_bad_en.data.decode("utf-8")
+    assert '<html lang="en">' in html_bad_en
+    assert 'id="error-summary"' in html_bad_en
+    assert 'href="#field-abc_case"' in html_bad_en
+    assert "Invalid choice." in html_bad_en

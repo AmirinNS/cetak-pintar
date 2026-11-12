@@ -27,6 +27,8 @@ TOPIC_OPTIONS: tuple[tuple[str, str], ...] = (
     ("div_digits", "div_digits"),
     ("div_divisors", "div_divisors"),
     ("div_rem", "div_rem"),
+    ("abc_case", "abc_case"),
+    ("missing_blanks", "missing_blanks"),
 )
 
 
@@ -34,15 +36,18 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the worksheet CLI."""
     parser = argparse.ArgumentParser(
         prog="cli.py",
-        description="Generate a printable A4 math worksheet PDF with an answer key.",
+        description="Generate a printable A4 math and alphabet worksheet PDF with an answer key.",
     )
     parser.add_argument(
         "--preset",
-        help="preset name (t1, t2, t3); explicit flags override the preset",
+        help="preset name (t1, t2, t3, abc); explicit flags override the preset",
     )
     parser.add_argument(
         "--topics",
-        help="comma-separated topics: grid, count, add, sub, sifir_ref, sifir, div",
+        help=(
+            "comma-separated topics: grid, count, add, sub, sifir_ref, sifir, div, "
+            "trace, missing, match"
+        ),
     )
     parser.add_argument("--pages", help="total content sheets, 1 to 20")
     parser.add_argument("--lang", help="worksheet language, ms or en (default ms)")
@@ -81,6 +86,14 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=None,
         help="require a nonzero remainder",
+    )
+    parser.add_argument(
+        "--abc-case",
+        help="letter case for tracing and missing letters: upper or lower",
+    )
+    parser.add_argument(
+        "--missing-blanks",
+        help="blanks per row for missing letters: 1, 2, or 3",
     )
     parser.add_argument("-o", "--output", required=True, help="PDF path to write")
     return parser
